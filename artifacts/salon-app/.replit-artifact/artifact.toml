@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "Maison Beauté"
+version = "1.0.0"
+id = "artifacts/salon-app"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 23751
+
+[services.development]
+run = "pnpm --filter @workspace/salon-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/salon-app", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/salon-app", "run", "serve" ]
+
+[services.env]
+PORT = "23751"
+BASE_PATH = "/"

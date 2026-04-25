@@ -1,0 +1,32 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "PAp5ADBIKj30WW5NXz8wr"
+uri = "file://artifacts/salon-app/assets/images/icon.png"
+type = "image"
+title = "luxury salon icon"
+
+[[generated]]
+id = "CPjAD4YYszw3PEgqoNKOT"
+uri = "file://artifacts/salon-app/assets/images/post-hair.png"
+type = "image"
+title = "salon hair work"
+
+[[generated]]
+id = "G_iWFNX1CSqljR1eYKF1Q"
+uri = "file://artifacts/salon-app/assets/images/post-nails.png"
+type = "image"
+title = "luxury manicure"
+
+[[generated]]
+id = "ieIdCwlMfxbWuNGKKKdGX"
+uri = "file://artifacts/salon-app/assets/images/post-makeup.png"
+type = "image"
+title = "makeup artistry"
+
+[[generated]]
+id = "SOskR0KmvEsAm47GkZWhm"
+uri = "file://artifacts/salon-app/assets/images/course-cover.png"
+type = "image"
+title = "luxury salon interior"
