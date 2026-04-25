@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -51,8 +52,8 @@ export default function LoginScreen() {
     }, 600);
   };
 
-  const topPad = insets.top + (Platform.OS === "web" ? 67 : 20);
-  const bottomPad = insets.bottom + (Platform.OS === "web" ? 34 : 24);
+  const topPad = insets.top + (Platform.OS === "web" ? 48 : 16);
+  const bottomPad = insets.bottom + (Platform.OS === "web" ? 28 : 20);
 
   return (
     <View
@@ -67,13 +68,20 @@ export default function LoginScreen() {
       >
         <View style={styles.inner}>
           <View style={styles.header}>
-            <View style={[styles.monogramBox, { borderColor: colors.gold }]}>
-              <Text style={[styles.monogram, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-                M
-              </Text>
-            </View>
-            <Text style={[styles.brand, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-              MAISON BEAUTÉ
+            <LinearGradient
+              colors={[colors.pink, colors.purple]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoRing}
+            >
+              <View style={[styles.logoInner, { backgroundColor: colors.background }]}>
+                <Text style={[styles.logoMark, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+                  M
+                </Text>
+              </View>
+            </LinearGradient>
+            <Text style={[styles.brand, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+              Maison Beauté
             </Text>
             <Text
               style={[
@@ -81,72 +89,76 @@ export default function LoginScreen() {
                 { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
               ]}
             >
-              Внутренняя сеть для команды дома
+              Социальная сеть и обучающая платформа{"\n"}для команды салонов красоты
             </Text>
           </View>
 
-          <View style={{ gap: 24 }}>
+          <View style={{ gap: 14 }}>
             <View>
-              <Text style={[styles.label, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-                ТЕЛЕФОН
+              <Text style={[styles.label, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
+                Телефон
               </Text>
-              <TextInput
-                value={phone}
-                onChangeText={(v) => setPhone(formatPhone(v))}
-                placeholder="+7 (___) ___-__-__"
-                placeholderTextColor={colors.mutedForeground}
-                keyboardType="phone-pad"
-                style={[styles.input, { color: colors.foreground, borderBottomColor: colors.border }]}
-              />
+              <View style={[styles.inputWrap, { backgroundColor: colors.input }]}>
+                <TextInput
+                  value={phone}
+                  onChangeText={(v) => setPhone(formatPhone(v))}
+                  placeholder="+7 (___) ___-__-__"
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="phone-pad"
+                  style={[styles.input, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}
+                />
+              </View>
             </View>
             <View>
-              <Text style={[styles.label, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-                ИМЯ И ФАМИЛИЯ
+              <Text style={[styles.label, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
+                Имя и фамилия
               </Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="Например, Анна Морозова"
-                placeholderTextColor={colors.mutedForeground}
-                autoCapitalize="words"
-                style={[styles.input, { color: colors.foreground, borderBottomColor: colors.border }]}
-              />
+              <View style={[styles.inputWrap, { backgroundColor: colors.input }]}>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Например, Анна Морозова"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="words"
+                  style={[styles.input, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}
+                />
+              </View>
             </View>
           </View>
 
-          <View style={{ gap: 18 }}>
+          <View style={{ gap: 16 }}>
             <PressableScale onPress={onSubmit} disabled={!valid || loading} scaleTo={0.97}>
-              <View
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: valid ? colors.gold : colors.muted,
-                    opacity: loading ? 0.7 : 1,
-                    borderColor: valid ? colors.gold : colors.border,
-                  },
-                ]}
+              <LinearGradient
+                colors={
+                  valid
+                    ? [colors.pink, colors.purple]
+                    : [colors.muted, colors.muted]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
               >
                 {loading ? (
-                  <ActivityIndicator color={colors.accentForeground} />
+                  <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text
                     style={[
                       styles.buttonText,
                       {
-                        color: valid ? colors.accentForeground : colors.mutedForeground,
+                        color: valid ? "#FFFFFF" : colors.mutedForeground,
                         fontFamily: "Inter_600SemiBold",
                       },
                     ]}
                   >
-                    ВОЙТИ
+                    Войти
                   </Text>
                 )}
-              </View>
+              </LinearGradient>
             </PressableScale>
             <Text
               style={[styles.legal, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}
             >
-              Закрытая система. Доступ только сотрудникам Maison Beauté. Подтверждая вход, вы принимаете внутренние правила дома.
+              Закрытая платформа для сотрудников Maison Beauté.{"\n"}Подтверждая вход, вы принимаете внутренние правила сети.
             </Text>
           </View>
         </View>
@@ -156,32 +168,43 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 28 },
+  container: { flex: 1, paddingHorizontal: 24 },
   inner: { flex: 1, justifyContent: "space-between", paddingVertical: 12 },
-  header: { alignItems: "center", gap: 14, paddingTop: 24 },
-  monogramBox: {
-    width: 84,
-    height: 84,
-    borderWidth: StyleSheet.hairlineWidth,
+  header: { alignItems: "center", gap: 18, paddingTop: 24 },
+  logoRing: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 3,
+  },
+  logoInner: {
+    flex: 1,
+    alignSelf: "stretch",
+    borderRadius: 45,
     alignItems: "center",
     justifyContent: "center",
   },
-  monogram: { fontSize: 46, includeFontPadding: false },
-  brand: { fontSize: 14, letterSpacing: 4 },
-  tagline: { fontSize: 12, textAlign: "center", letterSpacing: 0.5 },
-  label: { fontSize: 9, letterSpacing: 2, marginBottom: 10 },
+  logoMark: { fontSize: 38, includeFontPadding: false },
+  brand: { fontSize: 26, letterSpacing: 0.2 },
+  tagline: { fontSize: 14, textAlign: "center", lineHeight: 20 },
+  label: { fontSize: 13, marginBottom: 8, marginLeft: 4 },
+  inputWrap: {
+    borderRadius: 18,
+    paddingHorizontal: 18,
+  },
   input: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 12,
-    fontSize: 18,
-    letterSpacing: 0.4,
+    height: 56,
+    fontSize: 16,
+    letterSpacing: 0.2,
   },
   button: {
-    height: 56,
+    height: 58,
+    borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
   },
-  buttonText: { fontSize: 12, letterSpacing: 3 },
-  legal: { fontSize: 11, lineHeight: 17, textAlign: "center", letterSpacing: 0.3 },
+  buttonText: { fontSize: 16, letterSpacing: 0.3 },
+  legal: { fontSize: 12, lineHeight: 18, textAlign: "center" },
 });
