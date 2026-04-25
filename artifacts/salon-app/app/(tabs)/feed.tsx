@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { FlatList, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -33,7 +34,7 @@ export default function FeedScreen() {
     [posts, filter]
   );
 
-  const headerPad = insets.top + (Platform.OS === "web" ? 67 : 12);
+  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
   return (
@@ -46,17 +47,22 @@ export default function FeedScreen() {
           <View>
             <View style={[styles.header, { paddingTop: headerPad }]}>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-                  ЛЕНТА ДОМА
+                <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
+                  Лента дома
                 </Text>
-                <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                   Работы команды
                 </Text>
               </View>
               <PressableScale onPress={() => router.push("/post/new")} scaleTo={0.94}>
-                <View style={[styles.addBtn, { backgroundColor: colors.gold }]}>
-                  <Feather name="plus" size={18} color={colors.accentForeground} />
-                </View>
+                <LinearGradient
+                  colors={[colors.pink, colors.purple]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.addBtn}
+                >
+                  <Feather name="plus" size={22} color="#FFFFFF" />
+                </LinearGradient>
               </PressableScale>
             </View>
             <ScrollView
@@ -76,7 +82,7 @@ export default function FeedScreen() {
           </View>
         }
         renderItem={({ item }) => <PostCard post={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
         ListEmptyComponent={
           <EmptyState
             icon="image"
@@ -98,13 +104,14 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 12,
   },
-  eyebrow: { fontSize: 10, letterSpacing: 3, marginBottom: 4 },
+  eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
   title: { fontSize: 30, letterSpacing: -0.6 },
   addBtn: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 12 },
+  chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 8, paddingBottom: 16 },
 });

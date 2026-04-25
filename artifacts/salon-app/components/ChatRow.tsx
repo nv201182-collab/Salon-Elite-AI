@@ -39,17 +39,17 @@ export function ChatRow({ chat }: Props) {
       onPress={() => router.push({ pathname: "/chat/[id]", params: { id: chat.id } })}
       scaleTo={0.99}
     >
-      <View style={[styles.row, { borderBottomColor: colors.border }]}>
-        <Avatar initials={initials} size={48} variant={chat.kind === "company" ? "gold" : "default"} />
+      <View style={styles.row}>
+        <Avatar initials={initials} size={52} variant={chat.kind === "company" ? "gold" : "default"} />
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.titleRow}>
             <Text
               numberOfLines={1}
-              style={[styles.title, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}
+              style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}
             >
               {chat.title}
             </Text>
-            {chat.pinned ? <Feather name="bookmark" size={12} color={colors.gold} /> : null}
+            {chat.pinned ? <Feather name="bookmark" size={12} color={colors.pink} /> : null}
           </View>
           <Text
             numberOfLines={1}
@@ -64,9 +64,13 @@ export function ChatRow({ chat }: Props) {
               {shortTime(last.at)}
             </Text>
           ) : null}
-          <Text style={[styles.members, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-            {chat.members}
-          </Text>
+          {chat.members > 1 ? (
+            <View style={[styles.membersBadge, { backgroundColor: colors.muted }]}>
+              <Text style={[styles.members, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                {chat.members}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
     </PressableScale>
@@ -78,13 +82,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 12,
     gap: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontSize: 15, letterSpacing: 0.1 },
-  preview: { fontSize: 12, letterSpacing: 0.1 },
-  time: { fontSize: 11, letterSpacing: 0.2 },
-  members: { fontSize: 10, letterSpacing: 1 },
+  preview: { fontSize: 13, letterSpacing: 0.1 },
+  time: { fontSize: 11, letterSpacing: 0.1 },
+  membersBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  members: { fontSize: 11, letterSpacing: 0.1 },
 });

@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -57,7 +58,7 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const headerPad = insets.top + (Platform.OS === "web" ? 67 : 12);
+  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
   return (
@@ -67,36 +68,41 @@ export default function ProfileScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.header, { paddingTop: headerPad }]}>
-        <Avatar initials={user.initials} size={84} variant="gold" />
-        <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+        <Avatar initials={user.initials} size={96} variant="gold" />
+        <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
           {user.name}
         </Text>
         <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
           {user.specialty} · {salonName}
         </Text>
-        <View style={[styles.roleBadge, { borderColor: colors.gold }]}>
-          <Text style={[styles.roleText, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-            {getRoleLabel(user.role).toUpperCase()}
+        <LinearGradient
+          colors={[colors.pink, colors.purple]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.roleBadge}
+        >
+          <Text style={[styles.roleText, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
+            {getRoleLabel(user.role)}
           </Text>
-        </View>
+        </LinearGradient>
       </View>
 
-      <View style={[styles.heroCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
+      <View style={[styles.heroCard, { backgroundColor: colors.card }]}>
         <LevelBar points={user.points} compact />
       </View>
 
       <View style={styles.statsRow}>
-        <StatCard label="УРОВЕНЬ" value={level.label} />
-        <StatCard label="БАЛЛЫ" value={user.points.toLocaleString("ru-RU")} accent />
+        <StatCard label="Уровень" value={level.label} />
+        <StatCard label="Баллы" value={user.points.toLocaleString("ru-RU")} accent />
       </View>
       <View style={styles.statsRow}>
-        <StatCard label="КУРСОВ" value={String(completedCount)} hint={`из ${courses.length}`} />
-        <StatCard label="ПУБЛИКАЦИЙ" value={String(myPosts)} hint="всего" />
+        <StatCard label="Курсов" value={String(completedCount)} hint={`из ${courses.length}`} />
+        <StatCard label="Публикаций" value={String(myPosts)} hint="всего" />
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-          РЕЖИМ ДОСТУПА
+        <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+          Режим доступа
         </Text>
         <View style={styles.chipsRow}>
           {ROLE_OPTIONS.map((r) => (
@@ -105,7 +111,6 @@ export default function ProfileScreen() {
               label={r.label}
               active={user.role === r.value}
               onPress={() => setRole(r.value)}
-              variant="gold"
             />
           ))}
         </View>
@@ -123,36 +128,38 @@ export default function ProfileScreen() {
             label="Аналитика команды"
             sub="Доступ для руководителей"
             onPress={() => router.push("/analytics")}
-            accent
           />
         ) : null}
         <MenuItem icon="log-out" label="Выйти" sub={user.phone} onPress={onLogout} destructive />
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-          ПОСЛЕДНИЕ БАЛЛЫ
+        <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+          Последние баллы
         </Text>
         {pointsHistory.length === 0 ? (
           <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             Пока пусто. Завершите урок или опубликуйте работу — баллы появятся здесь.
           </Text>
         ) : (
-          <View style={{ gap: 0 }}>
-            {pointsHistory.slice(0, 8).map((rec) => (
+          <View style={[styles.historyCard, { backgroundColor: colors.card }]}>
+            {pointsHistory.slice(0, 8).map((rec, idx) => (
               <View
                 key={rec.id}
-                style={[styles.historyRow, { borderBottomColor: colors.border }]}
+                style={[
+                  styles.historyRow,
+                  idx > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border } : null,
+                ]}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.historyReason, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
+                  <Text style={[styles.historyReason, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
                     {rec.reason}
                   </Text>
                   <Text style={[styles.historyTime, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
                     {fmtTime(rec.at)}
                   </Text>
                 </View>
-                <Text style={[styles.historyPts, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+                <Text style={[styles.historyPts, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
                   +{rec.amount}
                 </Text>
               </View>
@@ -169,37 +176,29 @@ function MenuItem({
   label,
   sub,
   onPress,
-  accent,
   destructive,
 }: {
   icon: keyof typeof Feather.glyphMap;
   label: string;
   sub: string;
   onPress: () => void;
-  accent?: boolean;
   destructive?: boolean;
 }) {
   const colors = useColors();
   const fg = destructive ? colors.destructive : colors.foreground;
   return (
     <PressableScale onPress={onPress} scaleTo={0.99}>
-      <View
-        style={[
-          styles.menuRow,
-          {
-            borderBottomColor: colors.border,
-            backgroundColor: accent ? colors.card : "transparent",
-          },
-        ]}
-      >
-        <Feather name={icon} size={18} color={accent ? colors.gold : fg} />
+      <View style={[styles.menuRow, { backgroundColor: colors.card }]}>
+        <View style={[styles.menuIcon, { backgroundColor: destructive ? "rgba(229,72,77,0.12)" : colors.pinkSoft }]}>
+          <Feather name={icon} size={18} color={destructive ? colors.destructive : colors.pink} />
+        </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.menuLabel, { color: fg, fontFamily: "Inter_500Medium" }]}>{label}</Text>
+          <Text style={[styles.menuLabel, { color: fg, fontFamily: "Inter_600SemiBold" }]}>{label}</Text>
           <Text style={[styles.menuSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             {sub}
           </Text>
         </View>
-        <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
       </View>
     </PressableScale>
   );
@@ -207,46 +206,46 @@ function MenuItem({
 
 const styles = StyleSheet.create({
   header: { alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, gap: 10 },
-  name: { fontSize: 24, letterSpacing: -0.4, marginTop: 6 },
-  specialty: { fontSize: 13, letterSpacing: 0.3, textAlign: "center" },
+  name: { fontSize: 24, letterSpacing: -0.4, marginTop: 8 },
+  specialty: { fontSize: 13, letterSpacing: 0.1, textAlign: "center" },
   roleBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 999,
     marginTop: 4,
   },
-  roleText: { fontSize: 9, letterSpacing: 2 },
+  roleText: { fontSize: 11, letterSpacing: 0.2 },
   heroCard: {
     marginHorizontal: 20,
-    marginTop: 16,
-    padding: 18,
-    borderWidth: StyleSheet.hairlineWidth,
+    marginTop: 18,
+    padding: 20,
+    borderRadius: 22,
   },
   statsRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, marginTop: 10 },
   section: { paddingHorizontal: 20, marginTop: 28, gap: 12 },
-  sectionLabel: { fontSize: 9, letterSpacing: 2 },
+  sectionLabel: { fontSize: 16, letterSpacing: -0.1 },
   chipsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  hint: { fontSize: 11, lineHeight: 16, letterSpacing: 0.2 },
-  menu: { marginTop: 24, marginHorizontal: 20 },
+  hint: { fontSize: 12, lineHeight: 17, letterSpacing: 0.1 },
+  menu: { marginTop: 24, marginHorizontal: 20, gap: 10 },
   menuRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 14,
     gap: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
   },
-  menuLabel: { fontSize: 14, letterSpacing: 0.2 },
-  menuSub: { fontSize: 11, letterSpacing: 0.2, marginTop: 2 },
+  menuIcon: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  menuLabel: { fontSize: 14, letterSpacing: 0.1 },
+  menuSub: { fontSize: 12, letterSpacing: 0.1, marginTop: 2 },
+  historyCard: { borderRadius: 18, paddingHorizontal: 16 },
   historyRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 12,
   },
   historyReason: { fontSize: 13, letterSpacing: 0.1 },
-  historyTime: { fontSize: 11, letterSpacing: 0.2, marginTop: 2 },
-  historyPts: { fontSize: 14, letterSpacing: 0.2 },
+  historyTime: { fontSize: 11, letterSpacing: 0.1, marginTop: 2 },
+  historyPts: { fontSize: 14, letterSpacing: 0.1 },
 });

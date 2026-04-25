@@ -26,12 +26,7 @@ export function CourseCard({ course }: Props) {
       onPress={() => router.push({ pathname: "/course/[id]", params: { id: course.id } })}
       scaleTo={0.98}
     >
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.card, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.card }]}>
         <View style={styles.imageWrap}>
           <Image source={course.cover} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient
@@ -39,23 +34,28 @@ export function CourseCard({ course }: Props) {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.imageOverlay}>
-            <View style={[styles.levelPill, { borderColor: colors.gold }]}>
-              <Text style={[styles.levelText, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-                {course.level.toUpperCase()}
+            <View style={[styles.levelPill, { backgroundColor: "rgba(255,255,255,0.18)" }]}>
+              <Text style={[styles.levelText, { color: "#FFFFFF", fontFamily: "Inter_500Medium" }]}>
+                {course.level}
               </Text>
             </View>
-            <View style={styles.rewardWrap}>
-              <Feather name="award" size={12} color={colors.gold} />
-              <Text style={[styles.reward, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+            <LinearGradient
+              colors={[colors.pink, colors.purple]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.rewardWrap}
+            >
+              <Feather name="award" size={12} color="#FFFFFF" />
+              <Text style={[styles.reward, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
                 +{course.reward}
               </Text>
-            </View>
+            </LinearGradient>
           </View>
           <View style={styles.imageBottom}>
-            <Text style={[styles.eyebrow, { color: "#C9A961", fontFamily: "Inter_500Medium" }]}>
-              {course.category.toUpperCase()}
+            <Text style={[styles.eyebrow, { color: "#FFE3EC", fontFamily: "Inter_500Medium" }]}>
+              {course.category}
             </Text>
-            <Text numberOfLines={2} style={[styles.title, { color: "#F5F1EA", fontFamily: "Inter_500Medium" }]}>
+            <Text numberOfLines={2} style={[styles.title, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
               {course.title}
             </Text>
           </View>
@@ -67,26 +67,25 @@ export function CourseCard({ course }: Props) {
               {course.lessons.length} уроков · {totalMin} мин
             </Text>
             {isComplete ? (
-              <Text style={[styles.completeTag, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-                ПРОЙДЕНО
+              <Text style={[styles.completeTag, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
+                Пройдено
               </Text>
             ) : isStarted ? (
-              <Text style={[styles.completeTag, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+              <Text style={[styles.completeTag, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                 {Math.round(ratio * 100)}%
               </Text>
             ) : (
               <Text style={[styles.completeTag, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-                НАЧАТЬ
+                Начать
               </Text>
             )}
           </View>
           <View style={[styles.track, { backgroundColor: colors.muted }]}>
-            <View
-              style={{
-                width: `${Math.max(2, ratio * 100)}%`,
-                height: "100%",
-                backgroundColor: isComplete ? colors.gold : colors.foreground,
-              }}
+            <LinearGradient
+              colors={[colors.pink, colors.purple]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.fill, { width: `${Math.max(2, ratio * 100)}%` }]}
             />
           </View>
         </View>
@@ -97,8 +96,7 @@ export function CourseCard({ course }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 2,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 22,
     overflow: "hidden",
   },
   imageWrap: {
@@ -113,29 +111,28 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     zIndex: 2,
   },
-  imageBottom: { paddingHorizontal: 16, paddingBottom: 16, gap: 4, zIndex: 2 },
+  imageBottom: { paddingHorizontal: 18, paddingBottom: 18, gap: 4, zIndex: 2 },
   levelPill: {
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 999,
   },
-  levelText: { fontSize: 9, letterSpacing: 1.5 },
+  levelText: { fontSize: 11, letterSpacing: 0.2 },
   rewardWrap: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 999,
   },
-  reward: { fontSize: 11, letterSpacing: 0.4 },
-  eyebrow: { fontSize: 10, letterSpacing: 2 },
+  reward: { fontSize: 12, letterSpacing: 0.2 },
+  eyebrow: { fontSize: 11, letterSpacing: 0.3 },
   title: { fontSize: 18, letterSpacing: -0.2, lineHeight: 22 },
   body: { padding: 16, gap: 10 },
   metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  meta: { fontSize: 12, letterSpacing: 0.2 },
-  completeTag: { fontSize: 10, letterSpacing: 1.5 },
-  track: { height: 2, width: "100%", overflow: "hidden" },
+  meta: { fontSize: 12, letterSpacing: 0.1 },
+  completeTag: { fontSize: 12, letterSpacing: 0.1 },
+  track: { height: 6, width: "100%", borderRadius: 3, overflow: "hidden" },
+  fill: { height: "100%", borderRadius: 3 },
 });

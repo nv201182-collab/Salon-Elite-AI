@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -19,44 +20,41 @@ export function LevelBar({ points, compact }: Props) {
   const remaining = next ? next.min - points : 0;
 
   return (
-    <View style={[styles.wrap, compact ? { gap: 10 } : { gap: 14 }]}>
+    <View style={[styles.wrap, compact ? { gap: 12 } : { gap: 16 }]}>
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-            УРОВЕНЬ
+          <Text style={[styles.eyebrow, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
+            Уровень
           </Text>
-          <Text style={[styles.level, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.level, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
             {current.label}
           </Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-            БАЛЛЫ
+          <Text style={[styles.eyebrow, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
+            Баллы
           </Text>
-          <Text style={[styles.level, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.level, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
             {points.toLocaleString("ru-RU")}
           </Text>
         </View>
       </View>
 
-      <View style={[styles.track, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-        <View
-          style={[
-            styles.fill,
-            {
-              width: `${Math.max(2, ratio * 100)}%`,
-              backgroundColor: colors.gold,
-            },
-          ]}
+      <View style={[styles.track, { backgroundColor: colors.muted }]}>
+        <LinearGradient
+          colors={[colors.pink, colors.purple]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.fill, { width: `${Math.max(2, ratio * 100)}%` }]}
         />
       </View>
 
       {next ? (
         <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-          {remaining.toLocaleString("ru-RU")} баллов до уровня «{next.label}»
+          Ещё {remaining.toLocaleString("ru-RU")} баллов до уровня «{next.label}»
         </Text>
       ) : (
-        <Text style={[styles.hint, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+        <Text style={[styles.hint, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
           Высший уровень дома достигнут
         </Text>
       )}
@@ -65,11 +63,11 @@ export function LevelBar({ points, compact }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 12 },
+  wrap: { gap: 14 },
   headerRow: { flexDirection: "row", alignItems: "flex-end" },
-  eyebrow: { fontSize: 9, letterSpacing: 2, marginBottom: 4 },
+  eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
   level: { fontSize: 22, letterSpacing: -0.4 },
-  track: { height: 3, borderRadius: 0, overflow: "hidden", borderWidth: 0 },
-  fill: { height: "100%" },
-  hint: { fontSize: 12, letterSpacing: 0.2 },
+  track: { height: 8, borderRadius: 4, overflow: "hidden" },
+  fill: { height: "100%", borderRadius: 4 },
+  hint: { fontSize: 12, letterSpacing: 0.1 },
 });

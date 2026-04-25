@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,7 +25,7 @@ type Msg = { id: string; text: string; fromMe: boolean; at: number };
 const GREETING: Msg = {
   id: "init",
   text:
-    "Здравствуйте. Я внутренний ассистент Maison Beauté. Помогу с продажами, возражениями, скриптами встречи, программой обучения и баллами. Спросите коротко.",
+    "Привет! Я твой AI-ассистент Maison Beauté. Помогу с продажами, возражениями, скриптами встречи, программой обучения и баллами. Спрашивай!",
   fromMe: false,
   at: Date.now(),
 };
@@ -63,6 +64,7 @@ export default function AIScreen() {
   }, []);
 
   const inverted = [...messages].reverse();
+  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
 
   return (
     <KeyboardAvoidingView
@@ -70,6 +72,25 @@ export default function AIScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
+      <View style={[styles.headerBar, { paddingTop: headerPad }]}>
+        <LinearGradient
+          colors={[colors.pink, colors.purple]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.orb}
+        >
+          <Feather name="zap" size={18} color="#FFFFFF" />
+        </LinearGradient>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            AI-ассистент
+          </Text>
+          <Text style={[styles.headerSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            Чем я могу помочь?
+          </Text>
+        </View>
+      </View>
+
       <FlatList
         ref={listRef}
         data={inverted}
@@ -81,8 +102,8 @@ export default function AIScreen() {
         ListHeaderComponent={
           thinking ? (
             <View style={styles.thinkingRow}>
-              <View style={[styles.thinkingDot, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <ActivityIndicator size="small" color={colors.gold} />
+              <View style={[styles.thinkingDot, { backgroundColor: colors.card }]}>
+                <ActivityIndicator size="small" color={colors.pink} />
                 <Text style={[styles.thinkingText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
                   Ассистент печатает…
                 </Text>
@@ -109,8 +130,8 @@ export default function AIScreen() {
         >
           {SUGGESTED_PROMPTS.map((p) => (
             <PressableScale key={p} onPress={() => send(p)} scaleTo={0.95}>
-              <View style={[styles.suggest, { borderColor: colors.gold, backgroundColor: colors.card }]}>
-                <Text style={[styles.suggestText, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+              <View style={[styles.suggest, { backgroundColor: colors.card }]}>
+                <Text style={[styles.suggestText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
                   {p}
                 </Text>
               </View>
@@ -123,7 +144,6 @@ export default function AIScreen() {
         style={[
           styles.composer,
           {
-            borderTopColor: colors.border,
             paddingBottom: insets.bottom > 0 ? insets.bottom : 14,
             backgroundColor: colors.background,
           },
@@ -132,32 +152,31 @@ export default function AIScreen() {
         <TextInput
           value={draft}
           onChangeText={setDraft}
-          placeholder={user ? `Спросите что-то, ${user.name.split(" ")[0]}` : "Сообщение"}
+          placeholder={user ? `Задайте вопрос, ${user.name.split(" ")[0]}` : "Задайте вопрос..."}
           placeholderTextColor={colors.mutedForeground}
           style={[
             styles.composerInput,
-            { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card },
+            { color: colors.foreground, backgroundColor: colors.card },
           ]}
           onSubmitEditing={() => send(draft)}
           returnKeyType="send"
           multiline
         />
         <PressableScale onPress={() => send(draft)} scaleTo={0.9} disabled={!draft.trim()}>
-          <View
-            style={[
-              styles.sendBtn,
-              {
-                backgroundColor: draft.trim() ? colors.gold : colors.muted,
-                borderColor: draft.trim() ? colors.gold : colors.border,
-              },
-            ]}
-          >
-            <Feather
-              name="arrow-up"
-              size={18}
-              color={draft.trim() ? colors.accentForeground : colors.mutedForeground}
-            />
-          </View>
+          {draft.trim() ? (
+            <LinearGradient
+              colors={[colors.pink, colors.purple]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.sendBtn}
+            >
+              <Feather name="arrow-up" size={20} color="#FFFFFF" />
+            </LinearGradient>
+          ) : (
+            <View style={[styles.sendBtn, { backgroundColor: colors.muted }]}>
+              <Feather name="arrow-up" size={20} color={colors.mutedForeground} />
+            </View>
+          )}
         </PressableScale>
       </View>
     </KeyboardAvoidingView>
@@ -165,6 +184,16 @@ export default function AIScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  orb: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 20, letterSpacing: -0.3 },
+  headerSub: { fontSize: 13, letterSpacing: 0.1, marginTop: 2 },
   thinkingRow: { paddingHorizontal: 16, paddingVertical: 4 },
   thinkingDot: {
     flexDirection: "row",
@@ -173,44 +202,39 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 14,
-    borderTopLeftRadius: 2,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    borderTopLeftRadius: 4,
   },
-  thinkingText: { fontSize: 12, letterSpacing: 0.2 },
+  thinkingText: { fontSize: 12, letterSpacing: 0.1 },
   suggest: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
   },
-  suggestText: { fontSize: 11, letterSpacing: 1 },
+  suggestText: { fontSize: 13, letterSpacing: 0.1 },
   composer: {
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 10,
     paddingHorizontal: 14,
     paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   composerInput: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 48,
     maxHeight: 140,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 10,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderRadius: 24,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
   },
   sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

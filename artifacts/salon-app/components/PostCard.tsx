@@ -37,76 +37,78 @@ export function PostCard({ post }: Props) {
   const saved = user ? post.savedBy.includes(user.id) : false;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={styles.header}>
-        <Avatar initials={author?.initials ?? "M"} size={36} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-            {author?.name ?? "Сотрудник Maison"}
-          </Text>
-          <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-            {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
-          </Text>
-        </View>
-      </View>
-
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
       <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.99}>
         <Image source={post.image} style={styles.image} contentFit="cover" transition={200} />
       </PressableScale>
 
-      <View style={styles.actions}>
-        <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.85}>
-          <View style={styles.actionRow}>
-            <Feather name={liked ? "heart" : "heart"} size={20} color={liked ? colors.gold : colors.foreground} />
-            <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-              {post.likedBy.length}
+      <View style={styles.body}>
+        <View style={styles.header}>
+          <Avatar initials={author?.initials ?? "M"} size={36} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+              @{(author?.name ?? "maison").split(" ")[0].toLowerCase()}_{(author?.name ?? "maison").split(" ")[1]?.toLowerCase().slice(0, 6) ?? "maison"}
+            </Text>
+            <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
             </Text>
           </View>
-        </PressableScale>
-        <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.85}>
-          <View style={styles.actionRow}>
-            <Feather name="message-circle" size={20} color={colors.foreground} />
-            <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-              {post.comments.length}
-            </Text>
-          </View>
-        </PressableScale>
-        <View style={{ flex: 1 }} />
-        <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
-          <Feather name="bookmark" size={20} color={saved ? colors.gold : colors.foreground} />
-        </PressableScale>
-      </View>
+        </View>
 
-      <Text
-        numberOfLines={3}
-        style={[styles.caption, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-      >
-        {post.caption}
-      </Text>
-
-      {post.tags.length > 0 ? (
-        <Text style={[styles.tags, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-          {post.tags.map((t) => `#${t}`).join("  ")}
+        <Text
+          numberOfLines={3}
+          style={[styles.caption, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
+        >
+          {post.caption}
         </Text>
-      ) : null}
+
+        {post.tags.length > 0 ? (
+          <Text style={[styles.tags, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
+            {post.tags.map((t) => `#${t}`).join("  ")}
+          </Text>
+        ) : null}
+
+        <View style={styles.actions}>
+          <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.85}>
+            <View style={styles.actionRow}>
+              <Feather name="heart" size={20} color={liked ? colors.pink : colors.mutedForeground} />
+              <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                {post.likedBy.length}
+              </Text>
+            </View>
+          </PressableScale>
+          <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.85}>
+            <View style={styles.actionRow}>
+              <Feather name="message-circle" size={20} color={colors.mutedForeground} />
+              <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                {post.comments.length}
+              </Text>
+            </View>
+          </PressableScale>
+          <View style={{ flex: 1 }} />
+          <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
+            <Feather name="bookmark" size={20} color={saved ? colors.pink : colors.mutedForeground} />
+          </PressableScale>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
-    gap: 12,
+    borderRadius: 22,
+    overflow: "hidden",
+    marginHorizontal: 16,
   },
-  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20 },
+  body: { padding: 16, gap: 10 },
+  header: { flexDirection: "row", alignItems: "center", gap: 12 },
   name: { fontSize: 14, letterSpacing: 0.1 },
-  specialty: { fontSize: 11, marginTop: 2, letterSpacing: 0.2 },
-  image: { width: "100%", aspectRatio: 3 / 4 },
-  actions: { flexDirection: "row", alignItems: "center", gap: 22, paddingHorizontal: 20 },
+  specialty: { fontSize: 11, marginTop: 2, letterSpacing: 0.1 },
+  image: { width: "100%", aspectRatio: 4 / 5 },
+  actions: { flexDirection: "row", alignItems: "center", gap: 22, paddingTop: 4 },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  actionText: { fontSize: 13, letterSpacing: 0.2 },
-  caption: { fontSize: 13, lineHeight: 19, paddingHorizontal: 20 },
-  tags: { fontSize: 11, letterSpacing: 1, paddingHorizontal: 20 },
+  actionText: { fontSize: 13, letterSpacing: 0.1 },
+  caption: { fontSize: 14, lineHeight: 20 },
+  tags: { fontSize: 12, letterSpacing: 0.2 },
 });

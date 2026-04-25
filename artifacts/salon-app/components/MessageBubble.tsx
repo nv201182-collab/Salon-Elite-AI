@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -13,63 +14,83 @@ type Props = {
 
 export function MessageBubble({ text, fromMe, authorName, time, pinned }: Props) {
   const colors = useColors();
-  return (
-    <View style={[styles.row, { justifyContent: fromMe ? "flex-end" : "flex-start" }]}>
-      <View
+
+  const inner = (
+    <>
+      {!fromMe && authorName ? (
+        <Text style={[styles.author, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
+          {authorName}
+        </Text>
+      ) : null}
+      <Text
         style={[
-          styles.bubble,
-          {
-            backgroundColor: fromMe ? colors.gold : colors.card,
-            borderColor: fromMe ? colors.gold : colors.border,
-            borderTopLeftRadius: fromMe ? 14 : 2,
-            borderTopRightRadius: fromMe ? 2 : 14,
-          },
+          styles.text,
+          { color: fromMe ? "#FFFFFF" : colors.foreground, fontFamily: "Inter_400Regular" },
         ]}
       >
-        {!fromMe && authorName ? (
-          <Text style={[styles.author, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-            {authorName}
+        {text}
+      </Text>
+      <View style={styles.metaRow}>
+        {pinned ? (
+          <Text
+            style={[
+              styles.meta,
+              {
+                color: fromMe ? "#FFFFFF" : colors.pink,
+                fontFamily: "Inter_500Medium",
+                opacity: fromMe ? 0.7 : 1,
+              },
+            ]}
+          >
+            Закреплено
           </Text>
         ) : null}
-        <Text
+        {time ? (
+          <Text
+            style={[
+              styles.meta,
+              {
+                color: fromMe ? "#FFFFFF" : colors.mutedForeground,
+                fontFamily: "Inter_400Regular",
+                opacity: fromMe ? 0.75 : 1,
+              },
+            ]}
+          >
+            {time}
+          </Text>
+        ) : null}
+      </View>
+    </>
+  );
+
+  return (
+    <View style={[styles.row, { justifyContent: fromMe ? "flex-end" : "flex-start" }]}>
+      {fromMe ? (
+        <LinearGradient
+          colors={[colors.pink, colors.purple]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={[
-            styles.text,
-            { color: fromMe ? colors.accentForeground : colors.foreground, fontFamily: "Inter_400Regular" },
+            styles.bubble,
+            { borderTopLeftRadius: 18, borderTopRightRadius: 4 },
           ]}
         >
-          {text}
-        </Text>
-        <View style={styles.metaRow}>
-          {pinned ? (
-            <Text
-              style={[
-                styles.meta,
-                {
-                  color: fromMe ? colors.accentForeground : colors.gold,
-                  fontFamily: "Inter_500Medium",
-                  opacity: fromMe ? 0.7 : 1,
-                },
-              ]}
-            >
-              ЗАКРЕПЛЕНО
-            </Text>
-          ) : null}
-          {time ? (
-            <Text
-              style={[
-                styles.meta,
-                {
-                  color: fromMe ? colors.accentForeground : colors.mutedForeground,
-                  fontFamily: "Inter_400Regular",
-                  opacity: fromMe ? 0.7 : 1,
-                },
-              ]}
-            >
-              {time}
-            </Text>
-          ) : null}
+          {inner}
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            styles.bubble,
+            {
+              backgroundColor: colors.card,
+              borderTopLeftRadius: 4,
+              borderTopRightRadius: 18,
+            },
+          ]}
+        >
+          {inner}
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -80,13 +101,12 @@ const styles = StyleSheet.create({
     maxWidth: "82%",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderBottomLeftRadius: 14,
-    borderBottomRightRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
     gap: 4,
   },
-  author: { fontSize: 11, letterSpacing: 0.5 },
+  author: { fontSize: 11, letterSpacing: 0.1 },
   text: { fontSize: 14, lineHeight: 20 },
   metaRow: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
-  meta: { fontSize: 9, letterSpacing: 1 },
+  meta: { fontSize: 10, letterSpacing: 0.1 },
 });

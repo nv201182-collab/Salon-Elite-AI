@@ -21,42 +21,47 @@ export function ContestCard({ contest }: Props) {
       onPress={() => router.push({ pathname: "/contests/[id]", params: { id: contest.id } })}
       scaleTo={0.97}
     >
-      <View style={[styles.card, { borderColor: colors.gold }]}>
+      <View style={styles.card}>
         <Image source={contest.cover} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient
-          colors={["rgba(10,10,10,0.1)", "rgba(10,10,10,0.95)"]}
+          colors={["rgba(15,15,16,0.1)", "rgba(15,15,16,0.95)"]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.content}>
           <View style={styles.headerRow}>
-            <View style={[styles.badge, { borderColor: "#C9A961" }]}>
-              <Text style={[styles.badgeText, { color: "#C9A961", fontFamily: "Inter_500Medium" }]}>
-                КОНКУРС
+            <LinearGradient
+              colors={[colors.pink, colors.purple]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.badge}
+            >
+              <Text style={[styles.badgeText, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
+                Конкурс
               </Text>
-            </View>
-            <View style={styles.daysWrap}>
-              <Feather name="clock" size={11} color="#C9A961" />
-              <Text style={[styles.days, { color: "#F5F1EA", fontFamily: "Inter_500Medium" }]}>
+            </LinearGradient>
+            <View style={[styles.daysWrap, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+              <Feather name="clock" size={11} color="#FFFFFF" />
+              <Text style={[styles.days, { color: "#FFFFFF", fontFamily: "Inter_500Medium" }]}>
                 {days} дн.
               </Text>
             </View>
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text style={[styles.title, { color: "#F5F1EA", fontFamily: "Inter_500Medium" }]}>
+            <Text style={[styles.title, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
               {contest.title}
             </Text>
-            <Text style={[styles.prize, { color: "#C9A961", fontFamily: "Inter_400Regular" }]}>
+            <Text style={[styles.prize, { color: "#FFE3EC", fontFamily: "Inter_400Regular" }]}>
               {contest.prize}
             </Text>
           </View>
 
           <View style={styles.footer}>
-            <Text style={[styles.participants, { color: "#F5F1EA", fontFamily: "Inter_400Regular" }]}>
+            <Text style={[styles.participants, { color: "#FFFFFF", fontFamily: "Inter_400Regular" }]}>
               {contest.participants.length} участников
             </Text>
-            <Text style={[styles.cta, { color: "#C9A961", fontFamily: "Inter_500Medium" }]}>
-              ОТКРЫТЬ →
+            <Text style={[styles.cta, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
+              Открыть →
             </Text>
           </View>
         </View>
@@ -67,25 +72,30 @@ export function ContestCard({ contest }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    height: 220,
-    borderRadius: 2,
+    height: 240,
+    borderRadius: 22,
     overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
   },
   content: { flex: 1, justifyContent: "space-between", padding: 18 },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
   },
-  badgeText: { fontSize: 9, letterSpacing: 2 },
-  daysWrap: { flexDirection: "row", alignItems: "center", gap: 4 },
-  days: { fontSize: 11, letterSpacing: 0.5 },
+  badgeText: { fontSize: 11, letterSpacing: 0.2 },
+  daysWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  days: { fontSize: 11, letterSpacing: 0.2 },
   title: { fontSize: 22, letterSpacing: -0.4, lineHeight: 26 },
-  prize: { fontSize: 12, lineHeight: 17, letterSpacing: 0.2 },
+  prize: { fontSize: 13, lineHeight: 18, letterSpacing: 0.1 },
   footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  participants: { fontSize: 11, letterSpacing: 0.5 },
-  cta: { fontSize: 11, letterSpacing: 1.5 },
+  participants: { fontSize: 12, letterSpacing: 0.1 },
+  cta: { fontSize: 13, letterSpacing: 0.1 },
 });

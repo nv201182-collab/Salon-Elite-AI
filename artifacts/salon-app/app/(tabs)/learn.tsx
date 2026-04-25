@@ -31,7 +31,7 @@ export default function LearnScreen() {
 
   const completedCount = courses.filter((c) => getCourseProgress(c.id).ratio >= 1).length;
 
-  const headerPad = insets.top + (Platform.OS === "web" ? 67 : 12);
+  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
   return (
@@ -41,10 +41,10 @@ export default function LearnScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.header, { paddingTop: headerPad }]}>
-        <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
-          ОБУЧЕНИЕ
+        <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
+          Обучение
         </Text>
-        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
           Программа дома
         </Text>
         <Text
@@ -82,9 +82,9 @@ export default function LearnScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingBottom: 16, gap: 6 },
-  eyebrow: { fontSize: 10, letterSpacing: 3, marginBottom: 4 },
+  header: { paddingHorizontal: 20, paddingBottom: 14, gap: 6 },
+  eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
   title: { fontSize: 30, letterSpacing: -0.6 },
   summary: { fontSize: 13, lineHeight: 19, letterSpacing: 0.1, marginTop: 8 },
-  chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 12 },
+  chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 8, paddingBottom: 16 },
 });

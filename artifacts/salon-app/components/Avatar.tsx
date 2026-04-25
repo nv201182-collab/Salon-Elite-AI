@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -11,9 +12,35 @@ type Props = {
 
 export function Avatar({ initials, size = 40, variant = "default" }: Props) {
   const colors = useColors();
-  const isGold = variant === "gold";
-  const bg = isGold ? colors.gold : colors.secondary;
-  const fg = isGold ? colors.accentForeground : colors.foreground;
+  const isAccent = variant === "gold";
+
+  if (isAccent) {
+    return (
+      <LinearGradient
+        colors={[colors.pink, colors.purple]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.base,
+          { width: size, height: size, borderRadius: size / 2 },
+        ]}
+      >
+        <Text
+          style={[
+            styles.text,
+            {
+              color: "#FFFFFF",
+              fontSize: size * 0.36,
+              fontFamily: "Inter_600SemiBold",
+            },
+          ]}
+        >
+          {initials.slice(0, 2).toUpperCase()}
+        </Text>
+      </LinearGradient>
+    );
+  }
+
   return (
     <View
       style={[
@@ -22,8 +49,7 @@ export function Avatar({ initials, size = 40, variant = "default" }: Props) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: bg,
-          borderColor: isGold ? colors.goldDeep : colors.border,
+          backgroundColor: colors.secondary,
         },
       ]}
     >
@@ -31,10 +57,9 @@ export function Avatar({ initials, size = 40, variant = "default" }: Props) {
         style={[
           styles.text,
           {
-            color: fg,
+            color: colors.foreground,
             fontSize: size * 0.36,
-            fontFamily: "Inter_500Medium",
-            letterSpacing: 1,
+            fontFamily: "Inter_600SemiBold",
           },
         ]}
       >
@@ -48,9 +73,9 @@ const styles = StyleSheet.create({
   base: {
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
   },
   text: {
     includeFontPadding: false,
+    letterSpacing: 0.3,
   },
 });

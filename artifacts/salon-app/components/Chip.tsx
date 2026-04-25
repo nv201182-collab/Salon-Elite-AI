@@ -14,40 +14,19 @@ type Props = {
 export function Chip({ label, active, onPress, variant = "default" }: Props) {
   const colors = useColors();
 
-  const isGold = variant === "gold";
   const isGhost = variant === "ghost";
 
   const bg = active
-    ? isGold
-      ? colors.gold
-      : colors.foreground
+    ? colors.pink
     : isGhost
     ? "transparent"
     : colors.secondary;
 
-  const fg = active
-    ? isGold
-      ? colors.accentForeground
-      : colors.background
-    : colors.foreground;
-
-  const borderColor = isGhost
-    ? colors.border
-    : active
-    ? "transparent"
-    : colors.border;
+  const fg = active ? "#FFFFFF" : colors.foreground;
 
   return (
     <PressableScale onPress={onPress} scaleTo={0.94} haptic={!!onPress}>
-      <View
-        style={[
-          styles.chip,
-          {
-            backgroundColor: bg,
-            borderColor,
-          },
-        ]}
-      >
+      <View style={[styles.chip, { backgroundColor: bg }]}>
         <Text
           style={[
             styles.text,
@@ -66,14 +45,12 @@ export function Chip({ label, active, onPress, variant = "default" }: Props) {
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   text: {
-    fontSize: 12,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
+    fontSize: 13,
+    letterSpacing: 0.1,
   },
 });

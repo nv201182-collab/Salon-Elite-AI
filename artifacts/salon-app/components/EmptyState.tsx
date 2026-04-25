@@ -17,12 +17,12 @@ export function EmptyState({ icon = "circle", title, subtitle }: Props) {
       <View
         style={[
           styles.icon,
-          { borderColor: colors.border, backgroundColor: colors.card },
+          { backgroundColor: colors.card },
         ]}
       >
-        <Feather name={icon} size={20} color={colors.gold} />
+        <Feather name={icon} size={22} color={colors.pink} />
       </View>
-      <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+      <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
         {title}
       </Text>
       {subtitle ? (
@@ -35,11 +35,10 @@ export function EmptyState({ icon = "circle", title, subtitle }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", justifyContent: "center", paddingVertical: 48, paddingHorizontal: 24, gap: 12 },
+  container: { alignItems: "center", justifyContent: "center", paddingVertical: 56, paddingHorizontal: 24, gap: 14 },
   icon: {
-    width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
+    width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center",
   },
-  title: { fontSize: 15, letterSpacing: 0.4, textAlign: "center" },
+  title: { fontSize: 16, letterSpacing: 0.1, textAlign: "center" },
   subtitle: { fontSize: 13, lineHeight: 19, textAlign: "center", maxWidth: 280 },
 });

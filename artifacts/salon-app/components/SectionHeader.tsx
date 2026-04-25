@@ -16,17 +16,17 @@ export function SectionHeader({ eyebrow, title, action }: Props) {
     <View style={styles.row}>
       <View style={{ flex: 1 }}>
         {eyebrow ? (
-          <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
             {eyebrow}
           </Text>
         ) : null}
-        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
           {title}
         </Text>
       </View>
       {action ? (
         <PressableScale onPress={action.onPress} scaleTo={0.95}>
-          <Text style={[styles.action, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.action, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
             {action.label}
           </Text>
         </PressableScale>
@@ -36,8 +36,8 @@ export function SectionHeader({ eyebrow, title, action }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "flex-end", paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12 },
-  eyebrow: { fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 },
-  title: { fontSize: 22, letterSpacing: -0.4 },
-  action: { fontSize: 12, letterSpacing: 1, textTransform: "uppercase" },
+  row: { flexDirection: "row", alignItems: "flex-end", paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 },
+  eyebrow: { fontSize: 12, letterSpacing: 0.2, marginBottom: 4 },
+  title: { fontSize: 22, letterSpacing: -0.3 },
+  action: { fontSize: 13, letterSpacing: 0.1 },
 });

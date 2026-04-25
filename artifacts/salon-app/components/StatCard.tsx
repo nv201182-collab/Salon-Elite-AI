@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -12,44 +13,38 @@ type Props = {
 
 export function StatCard({ label, value, hint, accent }: Props) {
   const colors = useColors();
-  return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: accent ? colors.gold : colors.card,
-          borderColor: accent ? colors.gold : colors.border,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.label,
-          {
-            color: accent ? colors.accentForeground : colors.mutedForeground,
-            fontFamily: "Inter_500Medium",
-          },
-        ]}
-      >
-        {label}
-      </Text>
+
+  const content = (
+    <>
       <Text
         style={[
           styles.value,
           {
-            color: accent ? colors.accentForeground : colors.foreground,
-            fontFamily: "Inter_500Medium",
+            color: accent ? "#FFFFFF" : colors.foreground,
+            fontFamily: "Inter_600SemiBold",
           },
         ]}
       >
         {value}
+      </Text>
+      <Text
+        style={[
+          styles.label,
+          {
+            color: accent ? "#FFFFFF" : colors.mutedForeground,
+            fontFamily: "Inter_500Medium",
+            opacity: accent ? 0.85 : 1,
+          },
+        ]}
+      >
+        {label}
       </Text>
       {hint ? (
         <Text
           style={[
             styles.hint,
             {
-              color: accent ? colors.accentForeground : colors.mutedForeground,
+              color: accent ? "#FFFFFF" : colors.mutedForeground,
               fontFamily: "Inter_400Regular",
               opacity: accent ? 0.75 : 1,
             },
@@ -58,6 +53,25 @@ export function StatCard({ label, value, hint, accent }: Props) {
           {hint}
         </Text>
       ) : null}
+    </>
+  );
+
+  if (accent) {
+    return (
+      <LinearGradient
+        colors={[colors.pink, colors.purple]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.card}
+      >
+        {content}
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
+      {content}
     </View>
   );
 }
@@ -65,15 +79,14 @@ export function StatCard({ label, value, hint, accent }: Props) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    borderRadius: 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
+    borderRadius: 22,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
     gap: 4,
-    minHeight: 90,
-    justifyContent: "space-between",
+    minHeight: 96,
+    justifyContent: "center",
   },
-  label: { fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase" },
-  value: { fontSize: 26, letterSpacing: -0.6 },
-  hint: { fontSize: 11, letterSpacing: 0.2 },
+  label: { fontSize: 12, letterSpacing: 0.1 },
+  value: { fontSize: 28, letterSpacing: -0.6 },
+  hint: { fontSize: 11, letterSpacing: 0.1, marginTop: 2 },
 });
