@@ -50,7 +50,7 @@ export default function NewPostScreen() {
       } else {
         const r = await ImagePicker.launchImageLibraryAsync({
           quality: 0.8,
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ["images"],
         });
         if (!r.canceled && r.assets[0]) setImageUri(r.assets[0].uri);
       }
