@@ -78,9 +78,9 @@ const nails = require("../assets/images/post-nails.png") as ImageSrc;
 const makeup = require("../assets/images/post-makeup.png") as ImageSrc;
 
 export const SALONS_SEED: Salon[] = [
-  { id: "salon_msk", name: "Maison Beauté Москва", city: "Москва · Патриаршие" },
-  { id: "salon_spb", name: "Maison Beauté Санкт-Петербург", city: "Санкт-Петербург · Литейный" },
-  { id: "salon_sochi", name: "Maison Beauté Сочи", city: "Сочи · Курортный" },
+  { id: "salon_msk", name: "APIA Москва", city: "Москва · Патриаршие" },
+  { id: "salon_spb", name: "APIA Санкт-Петербург", city: "Санкт-Петербург · Литейный" },
+  { id: "salon_sochi", name: "APIA Сочи", city: "Сочи · Курортный" },
 ];
 
 export const EMPLOYEES_SEED: Employee[] = [
@@ -170,14 +170,14 @@ export const POSTS_SEED: Post[] = [
 export const COURSES_SEED: Course[] = [
   {
     id: "c_adapt",
-    title: "Адаптация в Maison Beauté",
-    description: "Путь нового сотрудника: ценности дома, регламенты, первые смены и стандарты сервиса.",
+    title: "Адаптация в APIA",
+    description: "Путь нового мастера: ценности экосистемы, регламенты, первые смены и стандарты сервиса.",
     cover, level: "Базовый", category: "Адаптация", reward: 400,
     lessons: [
-      { id: "l1", title: "Видеоприветствие основателя", type: "video", duration: 8, description: "Философия Maison Beauté из первых уст." },
+      { id: "l1", title: "Видеоприветствие основателя", type: "video", duration: 8, description: "Философия APIA из первых уст." },
       { id: "l2", title: "Стандарты сервиса", type: "text", duration: 12, description: "Чёткие правила, как мы говорим, двигаемся, обслуживаем." },
-      { id: "l3", title: "Чек-лист первой смены", type: "checklist", duration: 10, description: "11 пунктов, которые закрывает каждый новый сотрудник." },
-      { id: "l4", title: "Голос бренда", type: "text", duration: 10, description: "Как звучит Maison в чате, в зале и на ресепшн." },
+      { id: "l3", title: "Чек-лист первой смены", type: "checklist", duration: 10, description: "11 пунктов, которые закрывает каждый новый мастер." },
+      { id: "l4", title: "Голос бренда", type: "text", duration: 10, description: "Как звучит APIA в чате, в зале и на ресепшн." },
       { id: "l5", title: "Финальный тест адаптации", type: "test", duration: 15, description: "12 вопросов. Можно пересдать дважды." },
     ],
   },
@@ -208,7 +208,7 @@ export const COURSES_SEED: Course[] = [
   {
     id: "c_balayage",
     title: "Окрашивание Balayage",
-    description: "Авторская техника дома Maison: мягкие переходы, низкий ущерб, высокая себестоимость работы.",
+    description: "Авторская техника APIA: мягкие переходы, низкий ущерб, высокая себестоимость работы.",
     cover, level: "Экспертный", category: "Парикмахерское", reward: 700,
     lessons: [
       { id: "l1", title: "Теория цвета: пигмент и фон", type: "video", duration: 14, description: "Базовый словарь колориста." },
@@ -247,9 +247,9 @@ export const COURSES_SEED: Course[] = [
 ];
 
 export const CHATS_SEED: Chat[] = [
-  { id: "chat_company", kind: "company", title: "Maison Beauté HQ", subtitle: "47 сотрудников", members: 47, pinned: true },
-  { id: "chat_msk", kind: "salon", title: "Maison Москва", subtitle: "Команда салона", members: 14 },
-  { id: "chat_spb", kind: "salon", title: "Maison Санкт-Петербург", subtitle: "Команда салона", members: 16 },
+  { id: "chat_company", kind: "company", title: "APIA HQ", subtitle: "47 мастеров", members: 47, pinned: true },
+  { id: "chat_msk", kind: "salon", title: "APIA Москва", subtitle: "Команда салона", members: 14 },
+  { id: "chat_spb", kind: "salon", title: "APIA Санкт-Петербург", subtitle: "Команда салона", members: 16 },
   { id: "chat_hair", kind: "specialty", title: "Парикмахеры", subtitle: "Закрытый клуб", members: 18 },
   { id: "chat_nails", kind: "specialty", title: "Мастера маникюра", subtitle: "Закрытый клуб", members: 9 },
   { id: "dm_e1", kind: "dm", title: "София Орлова", subtitle: "Парикмахер-стилист", members: 2 },
@@ -301,7 +301,7 @@ export const CONTESTS_SEED: Contest[] = [
     id: "ct_month",
     title: "Топ-мастер месяца",
     description: "Учитывается выручка, рейтинг от гостей, активность в обучении и публикациях.",
-    cover: makeup, prize: "Поездка на неделю в Париж — Maison отправляет за свой счёт",
+    cover: makeup, prize: "Поездка на неделю в Париж — APIA отправляет за свой счёт",
     reward: 1500,
     participants: ["e1", "e2", "e4", "e5"],
     endsAt: now + 18 * day,

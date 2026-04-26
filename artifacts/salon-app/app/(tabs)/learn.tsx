@@ -45,7 +45,7 @@ export default function LearnScreen() {
           Обучение
         </Text>
         <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-          Программа дома
+          Программа APIA
         </Text>
         <Text
           style={[

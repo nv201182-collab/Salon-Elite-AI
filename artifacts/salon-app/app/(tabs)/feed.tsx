@@ -48,7 +48,7 @@ export default function FeedScreen() {
             <View style={[styles.header, { paddingTop: headerPad }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
-                  Лента дома
+                  Лента
                 </Text>
                 <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                   Работы команды

@@ -40,12 +40,12 @@ export default function ProfileScreen() {
 
   const completedCount = courses.filter((c) => getCourseProgress(c.id).ratio >= 1).length;
   const myPosts = posts.filter((p) => p.authorId === user.id).length;
-  const salonName = salons.find((s) => s.id === user.salonId)?.name ?? "Maison Beauté";
+  const salonName = salons.find((s) => s.id === user.salonId)?.name ?? "APIA";
   const isManager = user.role !== "employee";
   const level = getLevel(user.points);
 
   const onLogout = () => {
-    Alert.alert("Выйти из Maison?", "Учётные данные будут удалены с устройства.", [
+    Alert.alert("Выйти из APIA?", "Учётные данные будут удалены с устройства.", [
       { text: "Отмена", style: "cancel" },
       {
         text: "Выйти",

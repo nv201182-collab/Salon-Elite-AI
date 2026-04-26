@@ -16,7 +16,7 @@ export default function ContestsList() {
       showsVerticalScrollIndicator={false}
     >
       <Text style={[styles.intro, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-        Активные конкурсы дома. Победители определяются советом мастеров и руководителем направления. Призы — деньги, поездки, оборудование, доступ к закрытым программам.
+        Активные конкурсы APIA. Победители определяются советом мастеров и руководителем направления. Призы — деньги, поездки, оборудование, доступ к закрытым программам.
       </Text>
       {contests.map((c) => (
         <ContestCard key={c.id} contest={c} />

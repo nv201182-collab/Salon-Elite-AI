@@ -160,7 +160,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         id: Date.now().toString(36),
         authorId: user.id,
         image,
-        caption: caption.trim() || "Новая работа Maison Beauté",
+        caption: caption.trim() || "Новая работа APIA",
         tags,
         category,
         likedBy: [],

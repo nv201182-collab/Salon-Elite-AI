@@ -75,7 +75,7 @@ export default function PostDetail() {
                 <Avatar initials={author?.initials ?? "M"} size={42} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.authorName, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                    {author?.name ?? "Сотрудник Maison"}
+                    {author?.name ?? "Мастер APIA"}
                   </Text>
                   <Text style={[styles.authorSpec, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
                     {author?.specialty ?? ""} · {timeAgo(post.createdAt)}

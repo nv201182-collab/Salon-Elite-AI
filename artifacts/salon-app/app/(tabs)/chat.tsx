@@ -53,7 +53,7 @@ export default function ChatTab() {
                 Чаты
               </Text>
               <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                Команда дома
+                Команда APIA
               </Text>
             </View>
             <ScrollView

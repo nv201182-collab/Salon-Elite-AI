@@ -125,7 +125,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     setUser(newUser);
     setPointsHistory([
-      { id: "h0", amount: 50, reason: "Регистрация в Maison", at: Date.now() },
+      { id: "h0", amount: 50, reason: "Регистрация в APIA", at: Date.now() },
     ]);
   }, []);
 

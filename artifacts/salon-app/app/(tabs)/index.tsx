@@ -206,7 +206,7 @@ export default function HomeScreen() {
                   Аналитика
                 </Text>
                 <Text style={[styles.todayTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                  Команда дома · {employees.length} мастеров
+                  APIA · {employees.length} мастеров
                 </Text>
                 <Text style={[styles.todaySub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
                   Активность, обучение, рейтинг
