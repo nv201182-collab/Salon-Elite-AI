@@ -9,6 +9,7 @@ import React, {
 } from "react";
 
 import {
+  ACHIEVEMENTS_SEED,
   CHATS_SEED,
   CONTESTS_SEED,
   COURSES_SEED,
@@ -16,6 +17,8 @@ import {
   MESSAGES_SEED,
   POSTS_SEED,
   SALONS_SEED,
+  TRENDS_SEED,
+  type Achievement,
   type Chat,
   type Contest,
   type Course,
@@ -24,6 +27,7 @@ import {
   type Message,
   type Post,
   type Salon,
+  type Trend,
 } from "@/data/seed";
 import { useApp } from "./AppContext";
 
@@ -39,6 +43,9 @@ type Ctx = State & {
   employees: Employee[];
   courses: Course[];
   chats: Chat[];
+  trends: Trend[];
+  achievements: Achievement[];
+  hydrated: boolean;
   toggleLike: (postId: string) => void;
   toggleSave: (postId: string) => void;
   addComment: (postId: string, text: string) => void;
@@ -276,6 +283,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       employees: EMPLOYEES_SEED,
       courses: COURSES_SEED,
       chats: CHATS_SEED,
+      trends: TRENDS_SEED,
+      achievements: ACHIEVEMENTS_SEED,
+      hydrated,
       toggleLike,
       toggleSave,
       addComment,
@@ -289,6 +299,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       state,
+      hydrated,
       toggleLike,
       toggleSave,
       addComment,

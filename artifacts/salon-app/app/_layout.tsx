@@ -14,6 +14,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { BeeLoader } from "@/components/BeeLoader";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import colors from "@/constants/colors";
 import { AppProvider, useApp } from "@/contexts/AppContext";
@@ -89,7 +90,13 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsLoaded && !fontError) {
+    return (
+      <SafeAreaProvider>
+        <BeeLoader caption="APIA · загрузка" />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>

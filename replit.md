@@ -1,27 +1,26 @@
-# Workspace
+# APIA — Mobile App for Beauty Salon Network
 
 ## Overview
+Premium iOS/web mobile app for APIA salon network. Russian language, phone-based auth, light cream/honey palette, bee logo. Tagline: "ARCHITECTURE · PEOPLE · INTELLIGENCE · ACTION".
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+## Architecture
+- Monorepo (pnpm workspace) with three artifacts:
+  - `artifacts/salon-app` — Expo SDK 54 mobile app (main product)
+  - `artifacts/api-server` — backend API stub
+  - `artifacts/mockup-sandbox` — design preview server
+- Salon app stack: Expo Router 6, expo-image, expo-linear-gradient, react-native-reanimated 4, AsyncStorage, Inter fonts.
 
-## Stack
+## Salon App Structure
+- `app/_layout.tsx` — root with auth gate, BeeLoader during font load.
+- `app/(tabs)/` — tab order: **feed** (Лента, default), index (Главная), learn (Обучение), chat (Чаты), profile (Профиль).
+- `contexts/AppContext.tsx` — user, auth, points, level, role.
+- `contexts/DataContext.tsx` — posts, courses, chats, contests, trends, achievements; AsyncStorage persistence.
+- `data/seed.ts` — 6 salons, 22 employees, 30 posts, 14 courses, 8 contests, 13 chats, trends and achievements.
+- `data/images.ts` — curated trending Unsplash beauty image URLs.
+- `components/BeeLoader.tsx` — animated bee splash (figure-8 path, wing flap, gold trail dots).
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
-
-## Key Commands
-
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
-
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Key Conventions
+- Single salon-app artifact (free tier).
+- All photos use REMOTE map from `data/images.ts` — Unsplash trending shots categorized by hair / barber / nails / makeup / brows / skin / interior / tools.
+- Course categories: Адаптация, Сервис, Продажи, Парикмахерское, Маникюр, Брови, Макияж, Уход, Менеджмент.
+- Brand palette in `constants/colors.ts` and `hooks/useColors.ts`.

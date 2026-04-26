@@ -34,7 +34,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout, pointsHistory, setRole } = useApp();
-  const { courses, posts, getCourseProgress, salons } = useData();
+  const { courses, posts, getCourseProgress, salons, achievements } = useData();
 
   if (!user) return null;
 
@@ -131,6 +131,57 @@ export default function ProfileScreen() {
           />
         ) : null}
         <MenuItem icon="log-out" label="Выйти" sub={user.phone} onPress={onLogout} destructive />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+          Достижения
+        </Text>
+        <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+          {achievements.filter((a) => user.points >= a.threshold).length} из {achievements.length} открыто.
+        </Text>
+        <View style={styles.achGrid}>
+          {achievements.map((a) => {
+            const unlocked =
+              (a.id.startsWith("a_top_") && user.points >= a.threshold) ||
+              (a.id === "a_first_post" && myPosts >= 1) ||
+              (a.id === "a_ten_posts" && myPosts >= 10) ||
+              (a.id === "a_first_course" && completedCount >= 1) ||
+              (a.id === "a_five_courses" && completedCount >= 5);
+            return (
+              <View
+                key={a.id}
+                style={[
+                  styles.achCard,
+                  { backgroundColor: unlocked ? colors.card : colors.muted, opacity: unlocked ? 1 : 0.55 },
+                ]}
+              >
+                <View style={[styles.achIcon, { backgroundColor: unlocked ? colors.pinkSoft : colors.background }]}>
+                  <Feather
+                    name={a.icon as keyof typeof Feather.glyphMap}
+                    size={18}
+                    color={unlocked ? colors.pink : colors.mutedForeground}
+                  />
+                </View>
+                <Text
+                  numberOfLines={2}
+                  style={[styles.achTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}
+                >
+                  {a.title}
+                </Text>
+                <Text
+                  numberOfLines={2}
+                  style={[styles.achSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}
+                >
+                  {a.description}
+                </Text>
+                <Text style={[styles.achReward, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
+                  +{a.reward}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -248,4 +299,22 @@ const styles = StyleSheet.create({
   historyReason: { fontSize: 13, letterSpacing: 0.1 },
   historyTime: { fontSize: 11, letterSpacing: 0.1, marginTop: 2 },
   historyPts: { fontSize: 14, letterSpacing: 0.1 },
+  achGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  achCard: {
+    width: "48%",
+    padding: 14,
+    borderRadius: 18,
+    gap: 6,
+  },
+  achIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  achTitle: { fontSize: 13, letterSpacing: 0.1, lineHeight: 17 },
+  achSub: { fontSize: 11, letterSpacing: 0.1, lineHeight: 14 },
+  achReward: { fontSize: 12, letterSpacing: 0.1, marginTop: 2 },
 });

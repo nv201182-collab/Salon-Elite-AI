@@ -18,6 +18,12 @@ type TabSpec = {
 
 const TABS: TabSpec[] = [
   {
+    name: "feed",
+    title: "Лента",
+    sf: { default: "rectangle.stack", selected: "rectangle.stack.fill" },
+    feather: "image",
+  },
+  {
     name: "index",
     title: "Главная",
     sf: { default: "house", selected: "house.fill" },
@@ -28,12 +34,6 @@ const TABS: TabSpec[] = [
     title: "Обучение",
     sf: { default: "book", selected: "book.fill" },
     feather: "book-open",
-  },
-  {
-    name: "feed",
-    title: "Лента",
-    sf: { default: "rectangle.stack", selected: "rectangle.stack.fill" },
-    feather: "image",
   },
   {
     name: "chat",

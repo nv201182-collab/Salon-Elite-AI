@@ -16,6 +16,9 @@ const CATEGORIES: { key: Course["category"] | "Все"; label: string }[] = [
   { key: "Парикмахерское", label: "Парикмахерское" },
   { key: "Маникюр", label: "Маникюр" },
   { key: "Брови", label: "Брови" },
+  { key: "Макияж", label: "Макияж" },
+  { key: "Уход", label: "Уход" },
+  { key: "Менеджмент", label: "Менеджмент" },
 ];
 
 export default function LearnScreen() {
