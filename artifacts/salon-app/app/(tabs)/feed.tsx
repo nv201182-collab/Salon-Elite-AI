@@ -11,10 +11,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { LiquidBg } from "@/components/LiquidBg";
 import { PostCard } from "@/components/PostCard";
 import { PressableScale } from "@/components/PressableScale";
+import { type StoryItem, StoryViewer } from "@/components/StoryViewer";
 import { useApp } from "@/contexts/AppContext";
 import { useData } from "@/contexts/DataContext";
 import { useTabBar } from "@/contexts/TabBarContext";
-import { type Post } from "@/data/seed";
+import { type ImageSrc, type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 
 const FILTERS: { key: Post["category"] | "all"; label: string }[] = [
@@ -26,6 +27,12 @@ const FILTERS: { key: Post["category"] | "all"; label: string }[] = [
   { key: "skin", label: "Уход" },
 ];
 
+/** Extract a URI string from ImageSrc (skip local number assets) */
+function toUri(src: ImageSrc): string | null {
+  if (typeof src === "object" && "uri" in src) return src.uri;
+  return null;
+}
+
 export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -34,6 +41,7 @@ export default function FeedScreen() {
   const { posts, trends, employees } = useData();
   const [filter, setFilter] = useState<Post["category"] | "all">("all");
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [storyViewerIdx, setStoryViewerIdx] = useState<number | null>(null);
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 55 }).current;
   const onViewableItemsChanged = useRef(
@@ -48,21 +56,37 @@ export default function FeedScreen() {
     [posts, filter]
   );
 
-  const stories = useMemo(
-    () => [
-      { id: "you", name: "Вы", initials: user?.initials ?? "M", isYou: true },
-      ...employees.slice(0, 12).map((e) => ({
+  /** Build story items: "Вы" card + one card per employee with their post images */
+  const stories = useMemo<StoryItem[]>(() => {
+    const empStories: StoryItem[] = employees.slice(0, 14).map((e) => {
+      const empPosts = posts.filter((p) => p.authorId === e.id);
+      const frames = empPosts
+        .slice(0, 3)
+        .map((p) => toUri(p.image))
+        .filter((u): u is string => u !== null);
+      return {
         id: e.id,
         name: e.name.split(" ")[0],
         initials: e.initials,
-        isYou: false,
-      })),
-    ],
-    [employees, user]
-  );
+        specialty: e.specialty,
+        frames,
+      };
+    });
+
+    // "Вы" story — use any saved posts
+    const youFrames: string[] = [];
+    const youStory: StoryItem = {
+      id: "you",
+      name: "Вы",
+      initials: user?.initials ?? "M",
+      specialty: user?.specialty ?? "Мастер",
+      frames: youFrames,
+    };
+
+    return [youStory, ...empStories];
+  }, [employees, posts, user]);
 
   const { onScroll: tabOnScroll } = useTabBar();
-
   const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
@@ -83,6 +107,7 @@ export default function FeedScreen() {
         onScroll={handleScroll}
         ListHeaderComponent={
           <View>
+            {/* ── Header ─────────────────────────────────── */}
             <View style={[styles.header, { paddingTop: headerPad }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
@@ -104,27 +129,42 @@ export default function FeedScreen() {
               </PressableScale>
             </View>
 
+            {/* ── Stories ─────────────────────────────────── */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.storiesRow}
             >
-              {stories.map((s) => (
+              {stories.map((s, idx) => (
                 <PressableScale
                   key={s.id}
-                  onPress={() => (s.isYou ? router.push("/post/new") : null)}
+                  onPress={() => {
+                    if (s.id === "you") { router.push("/post/new"); return; }
+                    setStoryViewerIdx(idx);
+                  }}
                   scaleTo={0.95}
                 >
                   <View style={styles.storyItem}>
+                    {/* Ring — gold for you, pink→purple for others */}
                     <LinearGradient
-                      colors={[colors.pink, colors.purple]}
+                      colors={s.id === "you" ? [colors.pink, colors.purple] : ["#C8A064", "#8B5E3C"]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={styles.storyRing}
                     >
                       <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
+                        {/* If employee has story frames, show thumbnail */}
+                        {!s.id.startsWith("you") && s.frames.length > 0 ? (
+                          <View style={StyleSheet.absoluteFillObject}>
+                            {/* Small preview image as background */}
+                            <View style={[StyleSheet.absoluteFillObject, { borderRadius: 28, overflow: "hidden" }]}>
+                              {/* eslint-disable-next-line @typescript-eslint/no-require-imports */}
+                              <Avatar initials={s.initials} size={56} />
+                            </View>
+                          </View>
+                        ) : null}
                         <Avatar initials={s.initials} size={56} />
-                        {s.isYou ? (
+                        {s.id === "you" ? (
                           <View
                             style={[
                               styles.plusPill,
@@ -133,7 +173,12 @@ export default function FeedScreen() {
                           >
                             <Feather name="plus" size={12} color="#FFFFFF" />
                           </View>
-                        ) : null}
+                        ) : (
+                          // Dot indicator showing has content
+                          s.frames.length > 0 ? (
+                            <View style={[styles.dotPill, { backgroundColor: "#C8A064" }]} />
+                          ) : null
+                        )}
                       </View>
                     </LinearGradient>
                     <Text
@@ -147,6 +192,7 @@ export default function FeedScreen() {
               ))}
             </ScrollView>
 
+            {/* ── Trends ──────────────────────────────────── */}
             <View style={styles.trendsWrap}>
               <View style={styles.trendsHead}>
                 <Text style={[styles.trendsEyebrow, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
@@ -181,6 +227,7 @@ export default function FeedScreen() {
               </ScrollView>
             </View>
 
+            {/* ── Category filters ─────────────────────── */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -210,6 +257,14 @@ export default function FeedScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      {/* ── Story Viewer ─────────────────────────────── */}
+      <StoryViewer
+        stories={stories}
+        initialIndex={storyViewerIdx ?? 0}
+        visible={storyViewerIdx !== null}
+        onClose={() => setStoryViewerIdx(null)}
+      />
     </View>
   );
 }
@@ -225,69 +280,49 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
   title: { fontSize: 30, letterSpacing: -0.6 },
   addBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 48, height: 48, borderRadius: 24,
+    alignItems: "center", justifyContent: "center",
   },
   storiesRow: { gap: 12, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
   storyItem: { alignItems: "center", gap: 6, width: 70 },
   storyRing: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 64, height: 64, borderRadius: 32,
+    alignItems: "center", justifyContent: "center",
     padding: 2.5,
   },
   storyInner: {
-    flex: 1,
-    alignSelf: "stretch",
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
+    flex: 1, alignSelf: "stretch", borderRadius: 30,
+    alignItems: "center", justifyContent: "center",
   },
   storyName: { fontSize: 11, letterSpacing: 0.1 },
   plusPill: {
-    position: "absolute",
-    bottom: -2,
-    right: -2,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
+    position: "absolute", bottom: -2, right: -2,
+    width: 22, height: 22, borderRadius: 11,
+    alignItems: "center", justifyContent: "center",
     borderWidth: 2,
+  },
+  dotPill: {
+    position: "absolute", bottom: 2, right: 2,
+    width: 10, height: 10, borderRadius: 5,
+    borderWidth: 1.5, borderColor: "rgba(248,243,236,0.95)",
   },
   trendsWrap: { paddingTop: 8, paddingBottom: 4 },
   trendsHead: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 20, paddingBottom: 8,
   },
   trendsEyebrow: { fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase" },
   trendsRow: { gap: 8, paddingHorizontal: 16 },
   trendChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 8,
+    flexDirection: "row", alignItems: "center",
+    paddingVertical: 10, paddingHorizontal: 12,
+    borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, gap: 8,
   },
   trendTag: { fontSize: 13, letterSpacing: 0.1 },
   trendMeta: { fontSize: 11 },
   trendBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 999,
-    gap: 2,
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999, gap: 2,
   },
   trendGrowth: { fontSize: 10, letterSpacing: 0.1 },
   chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 8, paddingBottom: 16 },
