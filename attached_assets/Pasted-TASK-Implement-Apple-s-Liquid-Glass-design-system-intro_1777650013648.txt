@@ -1,0 +1,138 @@
+TASK: Implement Apple's "Liquid Glass" design system (introduced in iOS 26 at 
+WWDC 2025) across the entire app. This is NOT regular glassmorphism with blur — 
+it's a specific material with light refraction, specular highlights, and fluid 
+morphing animations between tabs.
+
+═══════════════════════════════════════
+EXECUTION ORDER — FOLLOW STRICTLY
+═══════════════════════════════════════
+
+⚠️ DO NOT modify the main app yet. Work in this exact order:
+
+PHASE 1 — Build isolated demo component first
+PHASE 2 — Show me the demo, let me verify it works
+PHASE 3 — Only after approval, integrate into the full app
+
+═══════════════════════════════════════
+PHASE 1: ISOLATED DEMO COMPONENT
+═══════════════════════════════════════
+
+Create a NEW standalone file: `src/components/LiquidTabBar.jsx` (or .tsx)
+Create a NEW demo route/page: `/liquid-demo` that renders ONLY this component 
+over a colorful scrollable background (use a vertical gradient with multiple 
+color stops: pink → purple → blue → teal, or place colorful image cards) so 
+the glass blur effect is visible.
+
+Do NOT touch existing app navigation, existing tab bars, or existing layouts 
+in this phase. The demo must be completely isolated and viewable at /liquid-demo.
+
+Install dependencies if not present:
+- framer-motion
+- lucide-react (for icons)
+
+Build the component with these EXACT specifications:
+
+─── 1.1 LIQUID GLASS MATERIAL ───
+Every glass surface must layer ALL of these (not just blur):
+- backdrop-filter: blur(20px) saturate(180%)
+- Base tint: rgba(255,255,255,0.18) light / rgba(28,28,30,0.55) dark
+- Inner top border: 1px inset rgba(255,255,255,0.45) — light edge
+- Inner bottom border: 1px inset rgba(255,255,255,0.08) — shadow edge
+- Outer shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)
+- Specular highlight: radial gradient at top-left 
+  (rgba(255,255,255,0.25) → transparent) for fake light refraction
+- Border-radius: 32px (full pill on tab bar)
+
+─── 1.2 TAB BAR LAYOUT ───
+- Floating pill, NOT edge-to-edge. Margin 12px from screen edges
+- Position: fixed bottom, centered
+- Height: 64px, border-radius: 32px
+- Background content must visibly blur behind it
+- 4–5 tabs (use placeholder icons from lucide-react: Home, Search, Heart, 
+  User, Settings)
+
+─── 1.3 GOO / LIQUID FILTER ───
+Place this SVG in the DOM once (inside the component):
+
+<svg style={{position:'absolute', width:0, height:0}}>
+  <defs>
+    <filter id="liquid">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" 
+        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"/>
+      <feComposite in="SourceGraphic" in2="goo"/>
+    </filter>
+  </defs>
+</svg>
+
+Apply `filter: url(#liquid)` to the tab bar inner container that holds 
+the active indicator + icons.
+
+─── 1.4 TAB SWITCHING ANIMATION (signature feature) ───
+- The active indicator is a glass "blob" BEHIND the active icon
+- Use Framer Motion with `layoutId="activeTab"` on the indicator — this 
+  auto-animates position between tabs
+- Spring config: { type: "spring", stiffness: 400, damping: 30 }
+- Indicator stretches horizontally during transit (scaleX 1.3 mid, 
+  back to 1.0) — creates elastic mercury feel
+- Combined with the goo filter, adjacent icons appear to MERGE and 
+  SEPARATE like liquid mercury during transition
+- Duration ~500ms, cubic-bezier(0.32, 0.72, 0, 1)
+
+─── 1.5 ICON + LABEL BEHAVIOR ───
+- Inactive tabs: icon only, scale(0.9), opacity 0.5
+- Active tab: icon scale(1.1) bouncing to 1.0, full opacity, vibrant 
+  tint color (#007AFF)
+- Label appears BELOW active icon only: 
+  opacity 0→1, translateY 4px→0, 300ms with 100ms delay after icon settles
+- Inactive icon color: rgba(0,0,0,0.5) light / rgba(255,255,255,0.5) dark
+
+─── 1.6 PRESS PHYSICS ───
+- On tap: scale(0.96), spring back on release
+- Light haptic feedback if available
+
+═══════════════════════════════════════
+PHASE 2: VERIFICATION CHECKPOINT
+═══════════════════════════════════════
+
+After building, STOP and report:
+1. Demo route URL (/liquid-demo)
+2. Screenshot or description of what's rendered
+3. Confirmation that the goo merge effect works during tab switching
+4. Confirmation that backdrop blur shows colors behind the bar
+
+⚠️ DO NOT proceed to Phase 3 until I review the demo and explicitly say "go".
+
+═══════════════════════════════════════
+PHASE 3: FULL APP INTEGRATION (only after approval)
+═══════════════════════════════════════
+
+Once I approve the demo, replace the existing tab bar with LiquidTabBar 
+and apply the same Liquid Glass material to:
+- Top navigation bar (sticky, content scrolls under, visibly blurred)
+- Modal sheets and popovers
+- Toast notifications
+- Floating action buttons
+- Search bars
+- Context menus
+
+Content cards/lists stay SOLID — glass is ONLY for floating UI chrome 
+overlaying content.
+
+═══════════════════════════════════════
+DO NOT
+═══════════════════════════════════════
+- Skip Phase 1 and modify main app directly
+- Use simple backdrop-filter:blur() alone (that's basic glassmorphism, 
+  NOT Liquid Glass)
+- Use linear/ease transitions (must be spring/cubic-bezier)
+- Forget the SVG goo filter (without it, no liquid merge effect)
+- Make glass fully opaque (content behind must be visible)
+- Apply glass to content cards (only floating chrome)
+
+References for visual accuracy:
+- https://developer.apple.com/design/human-interface-guidelines/materials
+- https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/
+- Search "iOS 26 Liquid Glass tab bar" on YouTube/Dribbble
+
+START WITH PHASE 1 NOW. Do not touch anything else.
