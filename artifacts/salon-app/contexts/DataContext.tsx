@@ -58,7 +58,7 @@ type Ctx = State & {
   getEmployee: (id: string) => Employee | undefined;
 };
 
-const STORAGE_KEY = "@maison/data/v1";
+const STORAGE_KEY = "@maison/data/v3";
 const DataContext = createContext<Ctx | null>(null);
 
 const INITIAL: State = {
@@ -79,12 +79,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw) as Partial<State>;
-          setState((s) => ({
-            posts: parsed.posts ?? s.posts,
-            courseProgress: parsed.courseProgress ?? s.courseProgress,
-            contests: parsed.contests ?? s.contests,
-            messagesByChat: parsed.messagesByChat ?? s.messagesByChat,
-          }));
+          setState((s) => {
+            const storedPosts: Post[] = parsed.posts ?? [];
+            const storedIds = new Set(storedPosts.map((p) => p.id));
+            const missingSeeds = POSTS_SEED.filter((p) => !storedIds.has(p.id));
+            return {
+              posts: storedPosts.length > 0 ? [...missingSeeds, ...storedPosts] : s.posts,
+              courseProgress: parsed.courseProgress ?? s.courseProgress,
+              contests: parsed.contests ?? s.contests,
+              messagesByChat: parsed.messagesByChat ?? s.messagesByChat,
+            };
+          });
         }
       } catch {}
       setHydrated(true);

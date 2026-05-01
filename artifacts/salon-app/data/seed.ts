@@ -130,7 +130,7 @@ export const EMPLOYEES_SEED: Employee[] = [
 ];
 
 const userPhoto = require("../assets/images/user_post1.png");
-const userVideo = require("../assets/videos/user_post1.mov");
+const userVideo = require("../assets/videos/user_post1.mp4");
 
 const now = Date.now();
 const day = 86_400_000;

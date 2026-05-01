@@ -35,6 +35,7 @@ function timeAgo(at: number): string {
 function VideoPlayer({ source }: { source: ImageSrc }) {
   const player = useVideoPlayer(source as never, (p) => {
     p.loop = true;
+    p.play();
   });
 
   return (
