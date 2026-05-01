@@ -26,7 +26,7 @@ export function CourseCard({ course }: Props) {
       onPress={() => router.push({ pathname: "/course/[id]", params: { id: course.id } })}
       scaleTo={0.98}
     >
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
+      <View style={styles.card}>
         <View style={styles.imageWrap}>
           <Image source={course.cover} style={StyleSheet.absoluteFill} contentFit="cover" />
           <LinearGradient
@@ -98,6 +98,14 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 22,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.68)",
+    backgroundColor: "rgba(250,246,240,0.70)",
+    shadowColor: "#8B7355",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 3,
   },
   imageWrap: {
     width: "100%",

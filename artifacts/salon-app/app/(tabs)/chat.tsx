@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Platform, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ChatRow } from "@/components/ChatRow";
 import { Chip } from "@/components/Chip";
+import { LiquidBg } from "@/components/LiquidBg";
 import { useData } from "@/contexts/DataContext";
+import { useTabBar } from "@/contexts/TabBarContext";
 import { useColors } from "@/hooks/useColors";
 
 type ChatFilter = "all" | "groups" | "dms";
@@ -19,6 +21,7 @@ export default function ChatTab() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { chats } = useData();
+  const { onScroll } = useTabBar();
   const [filter, setFilter] = useState<ChatFilter>("all");
 
   const sections = useMemo(() => {
@@ -40,27 +43,27 @@ export default function ChatTab() {
   const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
+  const handleScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    onScroll(e.nativeEvent.contentOffset.y);
+  }, [onScroll]);
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1 }}>
+      <LiquidBg />
       <SectionList
+        style={styles.list}
         sections={sections}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: bottomPad }}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
         ListHeaderComponent={
           <View>
             <View style={[styles.header, { paddingTop: headerPad }]}>
-              <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
-                Чаты
-              </Text>
-              <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                Команда APIA
-              </Text>
+              <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Чаты</Text>
+              <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Команда APIA</Text>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipsRow}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
               {FILTERS.map((f) => (
                 <Chip key={f.key} label={f.label} active={filter === f.key} onPress={() => setFilter(f.key)} />
               ))}
@@ -68,10 +71,8 @@ export default function ChatTab() {
           </View>
         }
         renderSectionHeader={({ section: { title } }) => (
-          <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
-            <Text style={[styles.sectionText, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-              {title}
-            </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionText, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>{title}</Text>
           </View>
         )}
         renderItem={({ item }) => <ChatRow chat={item} />}
@@ -83,6 +84,7 @@ export default function ChatTab() {
 }
 
 const styles = StyleSheet.create({
+  list: { flex: 1 },
   header: { paddingHorizontal: 20, paddingBottom: 14, gap: 6 },
   eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
   title: { fontSize: 30, letterSpacing: -0.6 },

@@ -9,6 +9,7 @@ import { useData } from "@/contexts/DataContext";
 import { EMPLOYEES_SEED, type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 import { Avatar } from "./Avatar";
+import { GlassCard } from "./GlassCard";
 import { PressableScale } from "./PressableScale";
 import { VideoInFeed } from "./VideoInFeed";
 
@@ -39,139 +40,133 @@ export function PostCard({ post, isActive = false }: Props) {
   const isVideo = !!post.video;
 
   const handleShare = async () => {
-    const authorName = author?.name ?? "мастер APIA";
     try {
       await Share.share({
-        message: `Посмотрите работу ${authorName} в APIA:\n\n"${post.caption}"\n\n${post.tags.map((t) => `#${t}`).join(" ")}`,
-        title: `Работа мастера APIA — ${authorName}`,
+        message: `Работа ${author?.name ?? "мастера APIA"} в APIA:\n\n"${post.caption}"\n\n${post.tags.map((t) => `#${t}`).join(" ")}`,
       });
     } catch {}
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
-      <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.99}>
-        <View style={[styles.imageWrap, { backgroundColor: "#111" }]}>
-          {isVideo && isActive ? (
-            <VideoInFeed source={post.video!} isActive={isActive} />
-          ) : (
-            <Image source={post.image} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={300} />
-          )}
-          {isVideo && !isActive ? (
-            <View style={[styles.playOverlay, { backgroundColor: "rgba(0,0,0,0.32)" }]}>
-              <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
-                <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
-              </View>
-            </View>
-          ) : null}
-        </View>
-      </PressableScale>
-
-      <View style={styles.body}>
-        <View style={styles.header}>
-          <Avatar initials={author?.initials ?? "M"} size={36} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-              @{(author?.name ?? "maison").split(" ")[0].toLowerCase()}_{(author?.name ?? "maison").split(" ")[1]?.toLowerCase().slice(0, 6) ?? "maison"}
-            </Text>
-            <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-              {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
-            </Text>
-          </View>
-          {isVideo ? (
-            <View style={[styles.videoBadge, { backgroundColor: colors.pinkSoft }]}>
-              <Feather name="video" size={11} color={colors.pink} />
-              <Text style={[styles.videoBadgeText, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
-                Видео
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
-        <Text
-          numberOfLines={3}
-          style={[styles.caption, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
+    <View style={styles.outerWrap}>
+      <GlassCard borderRadius={22} innerStyle={{ padding: 0 }} tintOpacity={0.30}>
+        <PressableScale
+          onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}
+          scaleTo={0.99}
         >
-          {post.caption}
-        </Text>
+          <View style={[styles.imageWrap, { backgroundColor: "#0D0D0D" }]}>
+            {isVideo && isActive ? (
+              <VideoInFeed source={post.video!} isActive={isActive} />
+            ) : (
+              <Image source={post.image} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={300} />
+            )}
+            {isVideo && !isActive ? (
+              <View style={styles.playOverlay}>
+                <View style={styles.playCircle}>
+                  <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
+                </View>
+              </View>
+            ) : null}
+            {isVideo ? (
+              <View style={styles.videoBadge}>
+                <Feather name="video" size={11} color="#FFFFFF" />
+                <Text style={[styles.videoBadgeText, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>Видео</Text>
+              </View>
+            ) : null}
+          </View>
+        </PressableScale>
 
-        {post.tags.length > 0 ? (
-          <Text style={[styles.tags, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
-            {post.tags.map((t) => `#${t}`).join("  ")}
+        <View style={styles.body}>
+          <View style={styles.headerRow}>
+            <Avatar initials={author?.initials ?? "M"} size={34} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.handle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+                @{(author?.name ?? "maison").split(" ")[0].toLowerCase()}_{(author?.name ?? "").split(" ")[1]?.toLowerCase().slice(0, 6) ?? "maison"}
+              </Text>
+              <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
+              </Text>
+            </View>
+          </View>
+
+          <Text numberOfLines={3} style={[styles.caption, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
+            {post.caption}
           </Text>
-        ) : null}
 
-        <View style={styles.actions}>
-          <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.85}>
-            <View style={styles.actionRow}>
-              <Feather name="heart" size={20} color={liked ? colors.pink : colors.mutedForeground} />
-              <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                {post.likedBy.length}
-              </Text>
-            </View>
-          </PressableScale>
-          <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.85}>
-            <View style={styles.actionRow}>
-              <Feather name="message-circle" size={20} color={colors.mutedForeground} />
-              <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                {post.comments.length}
-              </Text>
-            </View>
-          </PressableScale>
-          <PressableScale onPress={handleShare} scaleTo={0.85}>
-            <Feather name="share-2" size={20} color={colors.mutedForeground} />
-          </PressableScale>
-          <View style={{ flex: 1 }} />
-          <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
-            <Feather name="bookmark" size={20} color={saved ? colors.pink : colors.mutedForeground} />
-          </PressableScale>
+          {post.tags.length > 0 ? (
+            <Text style={[styles.tags, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
+              {post.tags.map((t) => `#${t}`).join("  ")}
+            </Text>
+          ) : null}
+
+          <View style={styles.actions}>
+            <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.85}>
+              <View style={styles.actionItem}>
+                <Feather name="heart" size={20} color={liked ? colors.pink : colors.mutedForeground} />
+                <Text style={[styles.actionNum, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                  {post.likedBy.length}
+                </Text>
+              </View>
+            </PressableScale>
+            <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.85}>
+              <View style={styles.actionItem}>
+                <Feather name="message-circle" size={20} color={colors.mutedForeground} />
+                <Text style={[styles.actionNum, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                  {post.comments.length}
+                </Text>
+              </View>
+            </PressableScale>
+            <PressableScale onPress={handleShare} scaleTo={0.85}>
+              <Feather name="share-2" size={20} color={colors.mutedForeground} />
+            </PressableScale>
+            <View style={{ flex: 1 }} />
+            <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
+              <Feather name="bookmark" size={20} color={saved ? colors.pink : colors.mutedForeground} />
+            </PressableScale>
+          </View>
         </View>
-      </View>
+      </GlassCard>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 22,
-    overflow: "hidden",
-    marginHorizontal: 16,
-  },
-  imageWrap: { position: "relative", width: "100%", aspectRatio: 4 / 5, overflow: "hidden" },
-  image: { width: "100%", aspectRatio: 4 / 5 },
+  outerWrap: { marginHorizontal: 16 },
+  imageWrap: { width: "100%", aspectRatio: 4 / 5, overflow: "hidden" },
   playOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.28)",
   },
   playCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
+    backgroundColor: "rgba(255,255,255,0.90)",
     alignItems: "center",
     justifyContent: "center",
   },
-  tapHint: {
-    fontSize: 11,
-    letterSpacing: 0.3,
-    marginTop: 4,
-  },
-  body: { padding: 16, gap: 10 },
-  header: { flexDirection: "row", alignItems: "center", gap: 12 },
-  name: { fontSize: 14, letterSpacing: 0.1 },
-  specialty: { fontSize: 11, marginTop: 2, letterSpacing: 0.1 },
   videoBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    backgroundColor: "rgba(0,0,0,0.55)",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
   },
   videoBadgeText: { fontSize: 10, letterSpacing: 0.1 },
-  actions: { flexDirection: "row", alignItems: "center", gap: 18, paddingTop: 4 },
-  actionRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  actionText: { fontSize: 13, letterSpacing: 0.1 },
+  body: { padding: 16, gap: 10 },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  handle: { fontSize: 13, letterSpacing: 0.1 },
+  specialty: { fontSize: 11, marginTop: 2, letterSpacing: 0.1 },
   caption: { fontSize: 14, lineHeight: 20 },
   tags: { fontSize: 12, letterSpacing: 0.2 },
+  actions: { flexDirection: "row", alignItems: "center", gap: 18, paddingTop: 4 },
+  actionItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  actionNum: { fontSize: 13, letterSpacing: 0.1 },
 });

@@ -1,17 +1,19 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, ScrollView, StyleSheet, Text, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
 import { Chip } from "@/components/Chip";
 import { EmptyState } from "@/components/EmptyState";
+import { LiquidBg } from "@/components/LiquidBg";
 import { PostCard } from "@/components/PostCard";
 import { PressableScale } from "@/components/PressableScale";
 import { useApp } from "@/contexts/AppContext";
 import { useData } from "@/contexts/DataContext";
+import { useTabBar } from "@/contexts/TabBarContext";
 import { type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 
@@ -59,17 +61,26 @@ export default function FeedScreen() {
     [employees, user]
   );
 
+  const { onScroll: tabOnScroll } = useTabBar();
+
   const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
+  const handleScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
+    tabOnScroll(e.nativeEvent.contentOffset.y);
+  }, [tabOnScroll]);
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1 }}>
+      <LiquidBg />
       <FlatList
         data={filtered}
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ paddingBottom: bottomPad }}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
         ListHeaderComponent={
           <View>
             <View style={[styles.header, { paddingTop: headerPad }]}>
@@ -111,13 +122,13 @@ export default function FeedScreen() {
                       end={{ x: 1, y: 1 }}
                       style={styles.storyRing}
                     >
-                      <View style={[styles.storyInner, { backgroundColor: colors.background }]}>
+                      <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
                         <Avatar initials={s.initials} size={56} />
                         {s.isYou ? (
                           <View
                             style={[
                               styles.plusPill,
-                              { backgroundColor: colors.pink, borderColor: colors.background },
+                              { backgroundColor: colors.pink, borderColor: "rgba(248,243,236,0.95)" },
                             ]}
                           >
                             <Feather name="plus" size={12} color="#FFFFFF" />
@@ -151,7 +162,7 @@ export default function FeedScreen() {
                 {trends.map((t) => (
                   <View
                     key={t.tag}
-                    style={[styles.trendChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    style={[styles.trendChip, { backgroundColor: "rgba(255,255,255,0.62)", borderColor: "rgba(255,255,255,0.68)" }]}
                   >
                     <Text style={[styles.trendTag, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                       #{t.tag}

@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -20,6 +20,7 @@ import { FloatingTabBar } from "@/components/FloatingTabBar";
 import colors from "@/constants/colors";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { DataProvider } from "@/contexts/DataContext";
+import { TabBarProvider } from "@/contexts/TabBarContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -107,14 +108,20 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    const t = setTimeout(() => setTimedOut(true), 800);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError || timedOut) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, timedOut]);
 
-  if (!fontsLoaded && !fontError) {
+  if (!fontsLoaded && !fontError && !timedOut) {
     return (
       <SafeAreaProvider>
         <BeeLoader caption="APIA · загрузка" />
@@ -130,10 +137,12 @@ export default function RootLayout() {
             <KeyboardProvider>
               <AppProvider>
                 <DataProvider>
-                  <StatusBar style="light" />
-                  <AuthGate>
-                    <RootLayoutNav />
-                  </AuthGate>
+                  <TabBarProvider>
+                    <StatusBar style="dark" />
+                    <AuthGate>
+                      <RootLayoutNav />
+                    </AuthGate>
+                  </TabBarProvider>
                 </DataProvider>
               </AppProvider>
             </KeyboardProvider>

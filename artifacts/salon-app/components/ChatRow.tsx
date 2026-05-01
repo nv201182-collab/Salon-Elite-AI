@@ -43,18 +43,12 @@ export function ChatRow({ chat }: Props) {
         <Avatar initials={initials} size={52} variant={chat.kind === "company" ? "gold" : "default"} />
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.titleRow}>
-            <Text
-              numberOfLines={1}
-              style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}
-            >
+            <Text numberOfLines={1} style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
               {chat.title}
             </Text>
             {chat.pinned ? <Feather name="bookmark" size={12} color={colors.pink} /> : null}
           </View>
-          <Text
-            numberOfLines={1}
-            style={[styles.preview, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}
-          >
+          <Text numberOfLines={1} style={[styles.preview, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             {last ? `${lastAuthor ? lastAuthor + ": " : ""}${last.text}` : chat.subtitle ?? ""}
           </Text>
         </View>
@@ -65,7 +59,7 @@ export function ChatRow({ chat }: Props) {
             </Text>
           ) : null}
           {chat.members > 1 ? (
-            <View style={[styles.membersBadge, { backgroundColor: colors.muted }]}>
+            <View style={[styles.membersBadge, { backgroundColor: "rgba(200,160,100,0.15)", borderColor: "rgba(200,160,100,0.25)", borderWidth: 1 }]}>
               <Text style={[styles.members, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
                 {chat.members}
               </Text>
