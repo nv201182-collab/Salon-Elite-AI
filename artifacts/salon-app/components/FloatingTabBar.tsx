@@ -1,7 +1,14 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import {
+  GlassContainer,
+  GlassView,
+  isGlassEffectAPIAvailable,
+} from "expo-glass-effect";
 import { useRouter, useSegments } from "expo-router";
 import React, { useCallback } from "react";
 import {
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -23,14 +30,17 @@ const TABS = [
 const TAB_BAR_HEIGHT = 64;
 
 function tabIndexFromSegments(segs: string[]): number {
-  const third = segs[2] as string | undefined;
-  if (!third || third === "(tabs)") return 1;
-  if (third === "feed")    return 0;
-  if (third === "learn")   return 2;
-  if (third === "chat")    return 3;
-  if (third === "profile") return 4;
+  const seg = segs[1] as string | undefined;
+  if (!seg) return 1;
+  if (seg === "feed")    return 0;
+  if (seg === "learn")   return 2;
+  if (seg === "chat")    return 3;
+  if (seg === "profile") return 4;
   return 1;
 }
+
+const glassAvailable =
+  Platform.OS === "ios" && isGlassEffectAPIAvailable();
 
 export function FloatingTabBar() {
   const colors   = useColors();
@@ -51,56 +61,80 @@ export function FloatingTabBar() {
   const bottomPad = insets.bottom > 0 ? insets.bottom : 10;
   const barHeight = TAB_BAR_HEIGHT + bottomPad;
 
+  const tabRow = (
+    <View style={styles.tabRow}>
+      {TABS.map((tab, idx) => {
+        const active = idx === activeIdx;
+        return (
+          <TouchableOpacity
+            key={tab.name}
+            style={styles.tabBtn}
+            onPress={() => onPressTab(tab.route)}
+            activeOpacity={0.6}
+          >
+            {active && (
+              <View
+                style={[styles.activeLine, { backgroundColor: colors.accent }]}
+              />
+            )}
+            <Feather
+              name={tab.icon}
+              size={22}
+              color={active ? colors.accent : colors.mutedForeground}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                {
+                  color: active ? colors.accent : colors.mutedForeground,
+                  fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular",
+                },
+              ]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
+  if (glassAvailable) {
+    return (
+      <GlassContainer
+        style={[styles.container, { height: barHeight, paddingBottom: bottomPad }]}
+      >
+        <GlassView
+          style={StyleSheet.absoluteFillObject}
+          glassEffectStyle="regular"
+          colorScheme="light"
+        />
+        <View style={[styles.topBorder, { backgroundColor: colors.border }]} />
+        {tabRow}
+      </GlassContainer>
+    );
+  }
+
   return (
     <View
       style={[
         styles.container,
-        {
-          height: barHeight,
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          paddingBottom: bottomPad,
-        },
+        { height: barHeight, paddingBottom: bottomPad },
       ]}
     >
-      <View style={styles.tabRow}>
-        {TABS.map((tab, idx) => {
-          const active = idx === activeIdx;
-          return (
-            <TouchableOpacity
-              key={tab.name}
-              style={styles.tabBtn}
-              onPress={() => onPressTab(tab.route)}
-              activeOpacity={0.6}
-            >
-              {active && (
-                <View
-                  style={[
-                    styles.activeDot,
-                    { backgroundColor: colors.accent },
-                  ]}
-                />
-              )}
-              <Feather
-                name={tab.icon}
-                size={22}
-                color={active ? colors.accent : colors.mutedForeground}
-              />
-              <Text
-                style={[
-                  styles.tabLabel,
-                  {
-                    color: active ? colors.accent : colors.mutedForeground,
-                    fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular",
-                  },
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <BlurView
+        intensity={85}
+        tint="light"
+        style={StyleSheet.absoluteFillObject}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { backgroundColor: "rgba(248,243,236,0.55)" },
+        ]}
+      />
+      <View style={[styles.topBorder, { backgroundColor: colors.border }]} />
+      {tabRow}
     </View>
   );
 }
@@ -111,9 +145,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
     zIndex: 100,
     elevation: 8,
+    overflow: "hidden",
+  },
+  topBorder: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
   },
   tabRow: {
     flex: 1,
@@ -128,7 +169,7 @@ const styles = StyleSheet.create({
     gap: 3,
     position: "relative",
   },
-  activeDot: {
+  activeLine: {
     position: "absolute",
     top: 0,
     width: 24,
