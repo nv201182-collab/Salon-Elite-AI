@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Share, StyleSheet, Text, View } from "react-native";
 
 import { useApp } from "@/contexts/AppContext";
 import { useData } from "@/contexts/DataContext";
@@ -35,11 +35,31 @@ export function PostCard({ post }: Props) {
 
   const liked = user ? post.likedBy.includes(user.id) : false;
   const saved = user ? post.savedBy.includes(user.id) : false;
+  const isVideo = !!post.video;
+
+  const handleShare = async () => {
+    const authorName = author?.name ?? "мастер APIA";
+    try {
+      await Share.share({
+        message: `Посмотрите работу ${authorName} в APIA:\n\n"${post.caption}"\n\n${post.tags.map((t) => `#${t}`).join(" ")}`,
+        title: `Работа мастера APIA — ${authorName}`,
+      });
+    } catch {}
+  };
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card }]}>
       <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.99}>
-        <Image source={post.image} style={styles.image} contentFit="cover" transition={200} />
+        <View style={styles.imageWrap}>
+          <Image source={post.image} style={styles.image} contentFit="cover" transition={300} />
+          {isVideo ? (
+            <View style={[styles.playOverlay, { backgroundColor: "rgba(0,0,0,0.35)" }]}>
+              <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
+                <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
+              </View>
+            </View>
+          ) : null}
+        </View>
       </PressableScale>
 
       <View style={styles.body}>
@@ -53,6 +73,14 @@ export function PostCard({ post }: Props) {
               {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
             </Text>
           </View>
+          {isVideo ? (
+            <View style={[styles.videoBadge, { backgroundColor: colors.pinkSoft }]}>
+              <Feather name="video" size={11} color={colors.pink} />
+              <Text style={[styles.videoBadgeText, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
+                Видео
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <Text
@@ -85,6 +113,9 @@ export function PostCard({ post }: Props) {
               </Text>
             </View>
           </PressableScale>
+          <PressableScale onPress={handleShare} scaleTo={0.85}>
+            <Feather name="share-2" size={20} color={colors.mutedForeground} />
+          </PressableScale>
           <View style={{ flex: 1 }} />
           <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
             <Feather name="bookmark" size={20} color={saved ? colors.pink : colors.mutedForeground} />
@@ -101,12 +132,34 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginHorizontal: 16,
   },
+  imageWrap: { position: "relative" },
+  image: { width: "100%", aspectRatio: 4 / 5 },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   body: { padding: 16, gap: 10 },
   header: { flexDirection: "row", alignItems: "center", gap: 12 },
   name: { fontSize: 14, letterSpacing: 0.1 },
   specialty: { fontSize: 11, marginTop: 2, letterSpacing: 0.1 },
-  image: { width: "100%", aspectRatio: 4 / 5 },
-  actions: { flexDirection: "row", alignItems: "center", gap: 22, paddingTop: 4 },
+  videoBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  videoBadgeText: { fontSize: 10, letterSpacing: 0.1 },
+  actions: { flexDirection: "row", alignItems: "center", gap: 18, paddingTop: 4 },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   actionText: { fontSize: 13, letterSpacing: 0.1 },
   caption: { fontSize: 14, lineHeight: 20 },

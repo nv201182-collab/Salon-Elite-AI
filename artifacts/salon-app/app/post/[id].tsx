@@ -1,8 +1,18 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
-import { FlatList, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { useVideoPlayer, VideoView } from "expo-video";
+import React, { useRef, useState } from "react";
+import {
+  FlatList,
+  Platform,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -10,7 +20,7 @@ import { Avatar } from "@/components/Avatar";
 import { PressableScale } from "@/components/PressableScale";
 import { useApp } from "@/contexts/AppContext";
 import { useData } from "@/contexts/DataContext";
-import { EMPLOYEES_SEED } from "@/data/seed";
+import { EMPLOYEES_SEED, type ImageSrc } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 
 function timeAgo(at: number): string {
@@ -22,6 +32,24 @@ function timeAgo(at: number): string {
   return `${d} дн`;
 }
 
+function VideoPlayer({ source }: { source: ImageSrc }) {
+  const player = useVideoPlayer(source as never, (p) => {
+    p.loop = true;
+  });
+
+  return (
+    <View style={styles.videoWrap}>
+      <VideoView
+        style={styles.videoView}
+        player={player}
+        allowsFullscreen
+        allowsPictureInPicture
+        contentFit="contain"
+      />
+    </View>
+  );
+}
+
 export default function PostDetail() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -29,8 +57,10 @@ export default function PostDetail() {
   const { user } = useApp();
   const { posts, toggleLike, toggleSave, addComment } = useData();
   const [draft, setDraft] = useState<string>("");
+  const [videoVisible, setVideoVisible] = useState(false);
 
   const post = posts.find((p) => p.id === id);
+
   if (!post) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
@@ -47,12 +77,25 @@ export default function PostDetail() {
 
   const liked = user ? post.likedBy.includes(user.id) : false;
   const saved = user ? post.savedBy.includes(user.id) : false;
+  const isVideo = !!post.video;
 
   const onSend = () => {
     if (!draft.trim()) return;
     addComment(post.id, draft);
     setDraft("");
   };
+
+  const onShare = async () => {
+    const authorName = author?.name ?? "мастер APIA";
+    try {
+      await Share.share({
+        message: `Посмотрите работу ${authorName} в APIA:\n\n"${post.caption}"\n\n${post.tags.map((t) => `#${t}`).join(" ")}`,
+        title: `Работа мастера APIA — ${authorName}`,
+      });
+    } catch {}
+  };
+
+  const bottomPad = insets.bottom > 0 ? insets.bottom + 70 : 80;
 
   return (
     <KeyboardAvoidingView
@@ -66,10 +109,30 @@ export default function PostDetail() {
         keyExtractor={(c) => c.id}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: bottomPad }}
         ListHeaderComponent={
           <View>
-            <Image source={post.image} style={styles.image} contentFit="cover" transition={200} />
+            {isVideo && videoVisible ? (
+              <VideoPlayer source={post.video!} />
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.92}
+                onPress={() => isVideo && setVideoVisible(true)}
+              >
+                <Image source={post.image} style={styles.image} contentFit="cover" transition={200} />
+                {isVideo ? (
+                  <View style={styles.playOverlay}>
+                    <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
+                      <Feather name="play" size={28} color="#1a1a1a" style={{ marginLeft: 3 }} />
+                    </View>
+                    <Text style={[styles.playHint, { color: "#FFFFFF", fontFamily: "Inter_500Medium" }]}>
+                      Нажмите, чтобы воспроизвести
+                    </Text>
+                  </View>
+                ) : null}
+              </TouchableOpacity>
+            )}
+
             <View style={styles.headerBlock}>
               <View style={styles.authorRow}>
                 <Avatar initials={author?.initials ?? "M"} size={42} />
@@ -86,7 +149,7 @@ export default function PostDetail() {
               <View style={styles.actionsRow}>
                 <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.85}>
                   <View style={styles.actionItem}>
-                    <Feather name="heart" size={22} color={liked ? colors.gold : colors.foreground} />
+                    <Feather name="heart" size={22} color={liked ? colors.pink : colors.foreground} />
                     <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
                       {post.likedBy.length}
                     </Text>
@@ -98,9 +161,17 @@ export default function PostDetail() {
                     {post.comments.length}
                   </Text>
                 </View>
+                <PressableScale onPress={onShare} scaleTo={0.85}>
+                  <View style={styles.actionItem}>
+                    <Feather name="share-2" size={22} color={colors.foreground} />
+                    <Text style={[styles.actionText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                      Поделиться
+                    </Text>
+                  </View>
+                </PressableScale>
                 <View style={{ flex: 1 }} />
                 <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
-                  <Feather name="bookmark" size={22} color={saved ? colors.gold : colors.foreground} />
+                  <Feather name="bookmark" size={22} color={saved ? colors.pink : colors.foreground} />
                 </PressableScale>
               </View>
 
@@ -120,15 +191,19 @@ export default function PostDetail() {
           </View>
         }
         renderItem={({ item }) => {
-          const a = item.authorId === "u_self"
-            ? { name: user?.name ?? "Вы", initials: user?.initials ?? "M" }
-            : EMPLOYEES_SEED.find((e) => e.id === item.authorId);
+          const a =
+            item.authorId === "u_self"
+              ? { name: user?.name ?? "Вы", initials: user?.initials ?? "M" }
+              : EMPLOYEES_SEED.find((e) => e.id === item.authorId);
           return (
             <View style={[styles.commentRow, { borderBottomColor: colors.border }]}>
               <Avatar initials={a?.initials ?? "M"} size={32} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={[styles.commentAuthor, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                  {a?.name} <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>· {timeAgo(item.at)}</Text>
+                  {a?.name}{" "}
+                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>
+                    · {timeAgo(item.at)}
+                  </Text>
                 </Text>
                 <Text style={[styles.commentText, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
                   {item.text}
@@ -150,7 +225,7 @@ export default function PostDetail() {
           styles.composer,
           {
             borderTopColor: colors.border,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 14,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + 64 : 74,
             backgroundColor: colors.background,
           },
         ]}
@@ -192,11 +267,28 @@ export default function PostDetail() {
 
 const styles = StyleSheet.create({
   image: { width: "100%", aspectRatio: 3 / 4 },
+  videoWrap: { width: "100%", aspectRatio: 3 / 4, backgroundColor: "#000" },
+  videoView: { width: "100%", height: "100%" },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  playCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playHint: { fontSize: 13, letterSpacing: 0.2, opacity: 0.9 },
   headerBlock: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, gap: 14 },
   authorRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   authorName: { fontSize: 14, letterSpacing: 0.1 },
   authorSpec: { fontSize: 11, letterSpacing: 0.1, marginTop: 2 },
-  actionsRow: { flexDirection: "row", alignItems: "center", gap: 22 },
+  actionsRow: { flexDirection: "row", alignItems: "center", gap: 18, flexWrap: "wrap" },
   actionItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   actionText: { fontSize: 13, letterSpacing: 0.2 },
   caption: { fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },

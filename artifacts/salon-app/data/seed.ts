@@ -24,6 +24,7 @@ export type Post = {
   savedBy: string[];
   comments: { id: string; authorId: string; text: string; at: number }[];
   createdAt: number;
+  video?: ImageSrc;
 };
 
 export type Lesson = {
@@ -128,11 +129,45 @@ export const EMPLOYEES_SEED: Employee[] = [
   { id: "e22", name: "Юлия Носова", specialty: "Эстетист", salonId: "salon_msk2", points: 6720, initials: "ЮН" },
 ];
 
+const userPhoto = require("../assets/images/user_post1.png");
+const userVideo = require("../assets/videos/user_post1.mov");
+
 const now = Date.now();
 const day = 86_400_000;
 const h = 3600_000;
 
 export const POSTS_SEED: Post[] = [
+  {
+    id: "p_video",
+    authorId: "u_self",
+    image: userPhoto,
+    video: userVideo,
+    category: "hair",
+    caption: "За работой — короткое видео из зала. Рабочий процесс, без постановки. Именно так выглядят наши будни в APIA.",
+    tags: ["бэкстейдж", "APIA", "зал"],
+    likedBy: ["e1", "e2", "e4", "e9", "e15"],
+    savedBy: ["e1", "e9"],
+    comments: [
+      { id: "cv1", authorId: "e1", text: "Видео огонь! Атмосфера передана идеально.", at: now - 30 * 60_000 },
+      { id: "cv2", authorId: "e15", text: "Отличный формат — больше таких!", at: now - 15 * 60_000 },
+    ],
+    createdAt: now - 40 * 60_000,
+  },
+  {
+    id: "p_photo",
+    authorId: "u_self",
+    image: userPhoto,
+    category: "hair",
+    caption: "После смены — прогулка по кварталу. Иногда важно выйти из зала и просто побыть в городе. Перезагрузка, которая возвращает вдохновение.",
+    tags: ["команда", "вдохновение"],
+    likedBy: ["e1", "e3", "e7", "e9", "e20"],
+    savedBy: ["e7"],
+    comments: [
+      { id: "cp1", authorId: "e7", text: "Вот это взгляд мастера 😎", at: now - 2 * h },
+      { id: "cp2", authorId: "e9", text: "Классный кадр!", at: now - 1 * h },
+    ],
+    createdAt: now - 3 * h,
+  },
   {
     id: "p1", authorId: "e1", image: uri(REMOTE.hair[0]), category: "hair",
     caption: "Холодный пепельный блонд с молочной растяжкой. Тонировка через два разных пигмента — чтобы убрать жёлтый и сохранить плотность цвета у корня.",

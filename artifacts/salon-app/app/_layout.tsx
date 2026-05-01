@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { BeeLoader } from "@/components/BeeLoader";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FloatingTabBar } from "@/components/FloatingTabBar";
 import colors from "@/constants/colors";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { DataProvider } from "@/contexts/DataContext";
@@ -46,33 +47,56 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 function RootLayoutNav() {
   const palette = colors.dark ?? colors.light;
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: palette.background },
-        headerTintColor: palette.foreground,
-        headerTitleStyle: { fontFamily: "Inter_600SemiBold" },
-        contentStyle: { backgroundColor: palette.background },
-        headerBackTitle: "Назад",
-      }}
-    >
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="course/[id]"
-        options={{ title: "Курс", headerBackTitle: "Назад" }}
-      />
-      <Stack.Screen
-        name="post/new"
-        options={{ title: "Новая публикация", presentation: "modal" }}
-      />
-      <Stack.Screen name="post/[id]" options={{ title: "Публикация" }} />
-      <Stack.Screen name="chat/[id]" options={{ title: "Чат" }} />
-      <Stack.Screen name="contests/index" options={{ title: "Конкурсы" }} />
-      <Stack.Screen name="contests/[id]" options={{ title: "Конкурс" }} />
-      <Stack.Screen name="analytics" options={{ title: "Аналитика" }} />
-      <Stack.Screen name="ai" options={{ title: "AI-ассистент" }} />
-      <Stack.Screen name="+not-found" options={{ title: "Не найдено" }} />
-    </Stack>
+    <>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.foreground,
+          headerTitleStyle: { fontFamily: "Inter_600SemiBold" },
+          contentStyle: { backgroundColor: palette.background },
+          headerBackTitle: "Назад",
+          animation: "fade_from_bottom",
+          animationDuration: 220,
+        }}
+      >
+        <Stack.Screen name="login" options={{ headerShown: false, animation: "fade" }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "fade" }} />
+        <Stack.Screen
+          name="course/[id]"
+          options={{ title: "Курс", headerBackTitle: "Назад", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="post/new"
+          options={{ title: "Новая публикация", presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="post/[id]"
+          options={{ title: "Публикация", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="chat/[id]"
+          options={{ title: "Чат", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="contests/index"
+          options={{ title: "Конкурсы", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="contests/[id]"
+          options={{ title: "Конкурс", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="analytics"
+          options={{ title: "Аналитика", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="ai"
+          options={{ title: "AI-ассистент", animation: "slide_from_right" }}
+        />
+        <Stack.Screen name="+not-found" options={{ title: "Не найдено" }} />
+      </Stack>
+      <FloatingTabBar />
+    </>
   );
 }
 
