@@ -49,7 +49,7 @@ type Ctx = State & {
   toggleLike: (postId: string) => void;
   toggleSave: (postId: string) => void;
   addComment: (postId: string, text: string) => void;
-  publishPost: (image: ImageSrc, caption: string, tags: string[], category: Post["category"]) => Post;
+  publishPost: (image: ImageSrc, caption: string, tags: string[], category: Post["category"], video?: ImageSrc) => Post;
   completeLesson: (courseId: string, lessonId: string) => number;
   joinContest: (contestId: string) => void;
   sendMessage: (chatId: string, text: string) => void;
@@ -166,7 +166,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   );
 
   const publishPost = useCallback(
-    (image: ImageSrc, caption: string, tags: string[], category: Post["category"]) => {
+    (image: ImageSrc, caption: string, tags: string[], category: Post["category"], video?: ImageSrc) => {
       if (!user) throw new Error("not authorized");
       const post: Post = {
         id: Date.now().toString(36),
@@ -179,6 +179,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         savedBy: [],
         comments: [],
         createdAt: Date.now(),
+        ...(video ? { video } : {}),
       };
       setState((s) => ({ ...s, posts: [post, ...s.posts] }));
       addPoints(50, "Новая публикация");

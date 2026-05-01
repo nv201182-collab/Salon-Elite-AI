@@ -50,13 +50,16 @@ export function PostCard({ post }: Props) {
   return (
     <View style={[styles.card, { backgroundColor: colors.card }]}>
       <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.99}>
-        <View style={styles.imageWrap}>
+        <View style={[styles.imageWrap, isVideo && { backgroundColor: "#111" }]}>
           <Image source={post.image} style={styles.image} contentFit="cover" transition={300} />
           {isVideo ? (
-            <View style={[styles.playOverlay, { backgroundColor: "rgba(0,0,0,0.35)" }]}>
+            <View style={[styles.playOverlay, { backgroundColor: "rgba(0,0,0,0.38)" }]}>
               <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
                 <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
               </View>
+              <Text style={[styles.tapHint, { color: "rgba(255,255,255,0.85)", fontFamily: "Inter_500Medium" }]}>
+                Нажмите для просмотра
+              </Text>
             </View>
           ) : null}
         </View>
@@ -145,6 +148,11 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
+  },
+  tapHint: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+    marginTop: 4,
   },
   body: { padding: 16, gap: 10 },
   header: { flexDirection: "row", alignItems: "center", gap: 12 },

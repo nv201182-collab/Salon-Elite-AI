@@ -2,17 +2,20 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useRouter } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useState } from "react";
 import {
   Alert,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Chip } from "@/components/Chip";
 import { PressableScale } from "@/components/PressableScale";
@@ -28,40 +31,104 @@ const CATEGORIES: { key: Post["category"]; label: string }[] = [
   { key: "skin", label: "Уход" },
 ];
 
+type MediaType = "photo" | "video";
+
+function VideoPreviewPlayer({ uri }: { uri: string }) {
+  const player = useVideoPlayer({ uri }, (p) => {
+    p.loop = true;
+    p.play();
+  });
+  return (
+    <VideoView
+      style={StyleSheet.absoluteFillObject}
+      player={player}
+      allowsFullscreen={false}
+      contentFit="cover"
+    />
+  );
+}
+
 export default function NewPostScreen() {
   const colors = useColors();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { publishPost } = useData();
-  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const [mediaUri, setMediaUri] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<MediaType>("photo");
   const [caption, setCaption] = useState<string>("");
   const [tagsRaw, setTagsRaw] = useState<string>("");
   const [category, setCategory] = useState<Post["category"]>("hair");
 
-  const pick = async (source: "camera" | "library") => {
+  const requestPermission = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(
+        "Нужен доступ к галерее",
+        "Откройте настройки приложения и разрешите доступ к медиатеке.",
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const pickPhoto = async (source: "camera" | "library") => {
     try {
+      let result: ImagePicker.ImagePickerResult;
       if (source === "camera") {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          Alert.alert("Нужен доступ к камере", "Откройте настройки приложения и разрешите камеру.");
+          Alert.alert("Нужен доступ к камере", "Откройте настройки и разрешите камеру.");
           return;
         }
-        const r = await ImagePicker.launchCameraAsync({ quality: 0.8 });
-        if (!r.canceled && r.assets[0]) setImageUri(r.assets[0].uri);
-      } else {
-        const r = await ImagePicker.launchImageLibraryAsync({
-          quality: 0.8,
+        result = await ImagePicker.launchCameraAsync({
           mediaTypes: ["images"],
+          quality: 0.85,
+          allowsEditing: true,
+          aspect: [3, 4],
         });
-        if (!r.canceled && r.assets[0]) setImageUri(r.assets[0].uri);
+      } else {
+        if (!(await requestPermission())) return;
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          quality: 0.85,
+          allowsEditing: true,
+          aspect: [3, 4],
+        });
       }
-    } catch (e) {
-      Alert.alert("Не удалось", "Попробуйте ещё раз.");
+      if (!result.canceled && result.assets[0]) {
+        setMediaUri(result.assets[0].uri);
+        setMediaType("photo");
+      }
+    } catch {
+      Alert.alert("Ошибка", "Не удалось открыть медиатеку. Попробуйте ещё раз.");
     }
   };
 
+  const pickVideo = async () => {
+    try {
+      if (!(await requestPermission())) return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["videos"],
+        videoMaxDuration: 120,
+        allowsEditing: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setMediaUri(result.assets[0].uri);
+        setMediaType("video");
+      }
+    } catch {
+      Alert.alert("Ошибка", "Не удалось выбрать видео. Попробуйте ещё раз.");
+    }
+  };
+
+  const clearMedia = () => {
+    setMediaUri(null);
+  };
+
   const onPublish = () => {
-    if (!imageUri) {
-      Alert.alert("Добавьте фото", "Без фотографии работа не публикуется.");
+    if (!mediaUri) {
+      Alert.alert("Добавьте фото или видео", "Публикация без медиа невозможна.");
       return;
     }
     const tags = tagsRaw
@@ -69,16 +136,21 @@ export default function NewPostScreen() {
       .map((t) => t.trim())
       .filter((t) => t.length > 0)
       .slice(0, 6);
-    publishPost({ uri: imageUri }, caption, tags, category);
+
+    const imageSource = { uri: mediaUri };
+    const videoSource = mediaType === "video" ? { uri: mediaUri } : undefined;
+
+    publishPost(imageSource, caption, tags, category, videoSource);
     router.back();
   };
 
-  const canPublish = !!imageUri;
+  const canPublish = !!mediaUri;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: colors.background }}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       <Stack.Screen
         options={{
@@ -99,43 +171,93 @@ export default function NewPostScreen() {
           ),
         }}
       />
+
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 60, gap: 20 }}
+        contentContainerStyle={{
+          padding: 20,
+          paddingBottom: insets.bottom + 80,
+          gap: 24,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {imageUri ? (
-          <View style={[styles.imageCard, { borderColor: colors.border }]}>
-            <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />
-            <PressableScale onPress={() => setImageUri(null)} scaleTo={0.92}>
-              <View style={[styles.imageRemove, { borderColor: colors.gold }]}>
-                <Feather name="x" size={14} color={colors.gold} />
+        {mediaUri ? (
+          <View style={[styles.previewCard, { borderColor: colors.border, backgroundColor: "#111" }]}>
+            {mediaType === "video" ? (
+              <VideoPreviewPlayer uri={mediaUri} />
+            ) : (
+              <Image
+                source={{ uri: mediaUri }}
+                style={StyleSheet.absoluteFillObject}
+                contentFit="cover"
+                transition={200}
+              />
+            )}
+
+            {mediaType === "video" ? (
+              <View style={[styles.videoBadge, { backgroundColor: "rgba(0,0,0,0.65)" }]}>
+                <Feather name="video" size={12} color="#fff" />
+                <Text style={[styles.videoBadgeText, { fontFamily: "Inter_600SemiBold" }]}>
+                  ВИДЕО
+                </Text>
               </View>
-            </PressableScale>
+            ) : null}
+
+            <TouchableOpacity
+              onPress={clearMedia}
+              style={[styles.removeBtn, { backgroundColor: "rgba(10,10,10,0.72)" }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={15} color="#fff" />
+            </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.imagePickerRow}>
-            <PressableScale onPress={() => pick("camera")} scaleTo={0.97} style={{ flex: 1 }}>
-              <View style={[styles.pickTile, { borderColor: colors.gold, backgroundColor: colors.card }]}>
-                <Feather name="camera" size={20} color={colors.gold} />
-                <Text style={[styles.pickLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                  СНЯТЬ
-                </Text>
-              </View>
-            </PressableScale>
-            <PressableScale onPress={() => pick("library")} scaleTo={0.97} style={{ flex: 1 }}>
-              <View style={[styles.pickTile, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                <Feather name="image" size={20} color={colors.gold} />
-                <Text style={[styles.pickLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                  ИЗ ГАЛЕРЕИ
-                </Text>
-              </View>
-            </PressableScale>
+          <View style={styles.pickerBlock}>
+            <Text style={[styles.sectionLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+              МЕДИА
+            </Text>
+            <View style={styles.pickRow}>
+              <PressableScale onPress={() => pickPhoto("camera")} scaleTo={0.97} style={styles.pickItem}>
+                <View style={[styles.pickTile, { borderColor: colors.gold, backgroundColor: colors.card }]}>
+                  <Feather name="camera" size={22} color={colors.gold} />
+                  <Text style={[styles.pickLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                    СНЯТЬ
+                  </Text>
+                  <Text style={[styles.pickSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                    Камера
+                  </Text>
+                </View>
+              </PressableScale>
+
+              <PressableScale onPress={() => pickPhoto("library")} scaleTo={0.97} style={styles.pickItem}>
+                <View style={[styles.pickTile, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                  <Feather name="image" size={22} color={colors.gold} />
+                  <Text style={[styles.pickLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                    ФОТО
+                  </Text>
+                  <Text style={[styles.pickSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                    Из галереи
+                  </Text>
+                </View>
+              </PressableScale>
+
+              <PressableScale onPress={pickVideo} scaleTo={0.97} style={styles.pickItem}>
+                <View style={[styles.pickTile, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                  <Feather name="video" size={22} color={colors.gold} />
+                  <Text style={[styles.pickLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                    ВИДЕО
+                  </Text>
+                  <Text style={[styles.pickSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                    Из галереи
+                  </Text>
+                </View>
+              </PressableScale>
+            </View>
           </View>
         )}
 
         <View style={{ gap: 10 }}>
-          <Text style={[styles.label, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.sectionLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
             КАТЕГОРИЯ
           </Text>
           <View style={styles.chipsRow}>
@@ -152,13 +274,13 @@ export default function NewPostScreen() {
         </View>
 
         <View style={{ gap: 10 }}>
-          <Text style={[styles.label, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.sectionLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
             ОПИСАНИЕ
           </Text>
           <TextInput
             value={caption}
             onChangeText={setCaption}
-            placeholder="Расскажите коротко о работе, технике, приёмах…"
+            placeholder="Расскажите о работе, технике, приёмах…"
             placeholderTextColor={colors.mutedForeground}
             multiline
             style={[
@@ -167,19 +289,20 @@ export default function NewPostScreen() {
                 color: colors.foreground,
                 borderColor: colors.border,
                 backgroundColor: colors.card,
+                fontFamily: "Inter_400Regular",
               },
             ]}
           />
         </View>
 
         <View style={{ gap: 10 }}>
-          <Text style={[styles.label, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.sectionLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
             ТЕГИ
           </Text>
           <TextInput
             value={tagsRaw}
             onChangeText={setTagsRaw}
-            placeholder="balayage, блонд, окрашивание"
+            placeholder="balayage, блонд, укладка"
             placeholderTextColor={colors.mutedForeground}
             autoCapitalize="none"
             style={[
@@ -188,11 +311,12 @@ export default function NewPostScreen() {
                 color: colors.foreground,
                 borderColor: colors.border,
                 backgroundColor: colors.card,
+                fontFamily: "Inter_400Regular",
               },
             ]}
           />
           <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-            Разделяйте запятыми или пробелами. Максимум — шесть тегов.
+            Разделяйте запятыми или пробелами · максимум 6 тегов
           </Text>
         </View>
 
@@ -206,6 +330,12 @@ export default function NewPostScreen() {
               },
             ]}
           >
+            <Feather
+              name={mediaType === "video" ? "video" : "image"}
+              size={15}
+              color={canPublish ? colors.accentForeground : colors.mutedForeground}
+              style={{ marginRight: 8 }}
+            />
             <Text
               style={[
                 styles.publishText,
@@ -225,56 +355,81 @@ export default function NewPostScreen() {
 }
 
 const styles = StyleSheet.create({
-  imagePickerRow: { flexDirection: "row", gap: 10 },
+  pickerBlock: { gap: 14 },
+  sectionLabel: { fontSize: 9, letterSpacing: 2 },
+  pickRow: { flexDirection: "row", gap: 10 },
+  pickItem: { flex: 1 },
   pickTile: {
-    aspectRatio: 1,
+    aspectRatio: 0.9,
     borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    gap: 14,
+    gap: 10,
   },
-  pickLabel: { fontSize: 11, letterSpacing: 2 },
-  imageCard: { aspectRatio: 3 / 4, borderWidth: StyleSheet.hairlineWidth, position: "relative" },
-  image: { width: "100%", height: "100%" },
-  imageRemove: {
+  pickLabel: { fontSize: 10, letterSpacing: 1.5 },
+  pickSub: { fontSize: 10, letterSpacing: 0.2 },
+  previewCard: {
+    aspectRatio: 3 / 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 20,
+    overflow: "hidden",
+    position: "relative",
+  },
+  videoBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  videoBadgeText: {
+    fontSize: 10,
+    color: "#fff",
+    letterSpacing: 1,
+  },
+  removeBtn: {
     position: "absolute",
     top: 12,
     right: 12,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "rgba(10,10,10,0.7)",
-    borderWidth: StyleSheet.hairlineWidth,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { fontSize: 9, letterSpacing: 2 },
   chipsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   captionInput: {
     minHeight: 110,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
     textAlignVertical: "top",
     letterSpacing: 0.1,
     lineHeight: 20,
+    borderRadius: 14,
   },
   tagsInput: {
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
     letterSpacing: 0.1,
+    borderRadius: 14,
   },
   hint: { fontSize: 11, letterSpacing: 0.2 },
   publishBtn: {
     height: 56,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
-    marginTop: 6,
+    borderRadius: 16,
+    marginTop: 4,
   },
-  publishText: { fontSize: 12, letterSpacing: 2 },
+  publishText: { fontSize: 12, letterSpacing: 1.5 },
 });
