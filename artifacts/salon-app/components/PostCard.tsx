@@ -10,8 +10,9 @@ import { EMPLOYEES_SEED, type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 import { Avatar } from "./Avatar";
 import { PressableScale } from "./PressableScale";
+import { VideoInFeed } from "./VideoInFeed";
 
-type Props = { post: Post };
+type Props = { post: Post; isActive?: boolean };
 
 function timeAgo(at: number): string {
   const diff = Date.now() - at;
@@ -22,7 +23,7 @@ function timeAgo(at: number): string {
   return `${d} дн`;
 }
 
-export function PostCard({ post }: Props) {
+export function PostCard({ post, isActive = false }: Props) {
   const colors = useColors();
   const router = useRouter();
   const { user } = useApp();
@@ -50,16 +51,17 @@ export function PostCard({ post }: Props) {
   return (
     <View style={[styles.card, { backgroundColor: colors.card }]}>
       <PressableScale onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })} scaleTo={0.99}>
-        <View style={[styles.imageWrap, isVideo && { backgroundColor: "#111" }]}>
-          <Image source={post.image} style={styles.image} contentFit="cover" transition={300} />
-          {isVideo ? (
-            <View style={[styles.playOverlay, { backgroundColor: "rgba(0,0,0,0.38)" }]}>
+        <View style={[styles.imageWrap, { backgroundColor: "#111" }]}>
+          {isVideo && isActive ? (
+            <VideoInFeed source={post.video!} isActive={isActive} />
+          ) : (
+            <Image source={post.image} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={300} />
+          )}
+          {isVideo && !isActive ? (
+            <View style={[styles.playOverlay, { backgroundColor: "rgba(0,0,0,0.32)" }]}>
               <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
                 <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
               </View>
-              <Text style={[styles.tapHint, { color: "rgba(255,255,255,0.85)", fontFamily: "Inter_500Medium" }]}>
-                Нажмите для просмотра
-              </Text>
             </View>
           ) : null}
         </View>
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginHorizontal: 16,
   },
-  imageWrap: { position: "relative" },
+  imageWrap: { position: "relative", width: "100%", aspectRatio: 4 / 5, overflow: "hidden" },
   image: { width: "100%", aspectRatio: 4 / 5 },
   playOverlay: {
     ...StyleSheet.absoluteFillObject,

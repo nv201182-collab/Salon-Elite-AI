@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
-import { FlatList, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useMemo, useRef, useState } from "react";
+import { FlatList, Platform, ScrollView, StyleSheet, Text, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
@@ -31,6 +31,15 @@ export default function FeedScreen() {
   const { user } = useApp();
   const { posts, trends, employees } = useData();
   const [filter, setFilter] = useState<Post["category"] | "all">("all");
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 55 }).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const firstVideo = viewableItems.find((v) => v.isViewable && (v.item as Post).video);
+      setActiveVideoId(firstVideo ? (firstVideo.item as Post).id : null);
+    }
+  ).current;
 
   const filtered = useMemo(
     () => (filter === "all" ? posts : posts.filter((p) => p.category === filter)),
@@ -59,6 +68,8 @@ export default function FeedScreen() {
         data={filtered}
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ paddingBottom: bottomPad }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         ListHeaderComponent={
           <View>
             <View style={[styles.header, { paddingTop: headerPad }]}>
@@ -175,7 +186,9 @@ export default function FeedScreen() {
             </ScrollView>
           </View>
         }
-        renderItem={({ item }) => <PostCard post={item} />}
+        renderItem={({ item }) => (
+          <PostCard post={item} isActive={item.id === activeVideoId} />
+        )}
         ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
         ListEmptyComponent={
           <EmptyState

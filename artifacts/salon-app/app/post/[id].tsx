@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   Platform,
@@ -17,6 +17,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { PinchZoomImage } from "@/components/PinchZoomImage";
 import { PressableScale } from "@/components/PressableScale";
 import { useApp } from "@/contexts/AppContext";
 import { useData } from "@/contexts/DataContext";
@@ -115,23 +116,23 @@ export default function PostDetail() {
           <View>
             {isVideo && videoVisible ? (
               <VideoPlayer source={post.video!} />
-            ) : (
+            ) : isVideo ? (
               <TouchableOpacity
                 activeOpacity={0.92}
-                onPress={() => isVideo && setVideoVisible(true)}
+                onPress={() => setVideoVisible(true)}
               >
                 <Image source={post.image} style={styles.image} contentFit="cover" transition={200} />
-                {isVideo ? (
-                  <View style={styles.playOverlay}>
-                    <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
-                      <Feather name="play" size={28} color="#1a1a1a" style={{ marginLeft: 3 }} />
-                    </View>
-                    <Text style={[styles.playHint, { color: "#FFFFFF", fontFamily: "Inter_500Medium" }]}>
-                      Нажмите, чтобы воспроизвести
-                    </Text>
+                <View style={styles.playOverlay}>
+                  <View style={[styles.playCircle, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
+                    <Feather name="play" size={28} color="#1a1a1a" style={{ marginLeft: 3 }} />
                   </View>
-                ) : null}
+                  <Text style={[styles.playHint, { color: "#FFFFFF", fontFamily: "Inter_500Medium" }]}>
+                    Нажмите, чтобы воспроизвести
+                  </Text>
+                </View>
               </TouchableOpacity>
+            ) : (
+              <PinchZoomImage source={post.image} style={styles.image} />
             )}
 
             <View style={styles.headerBlock}>
