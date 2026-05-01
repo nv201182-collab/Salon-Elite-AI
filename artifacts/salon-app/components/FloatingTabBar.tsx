@@ -10,7 +10,6 @@ import React, { useCallback, useEffect, useRef } from "react";
 import {
   Platform,
   StyleSheet,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -18,6 +17,7 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -27,7 +27,7 @@ import { useApp } from "@/contexts/AppContext";
 import { useTabBar } from "@/contexts/TabBarContext";
 import { useColors } from "@/hooks/useColors";
 
-/* ─── Tab definitions ─────────────────────────────────────── */
+/* ─── Tab definitions ──────────────────────────────────────── */
 const TABS = [
   { name: "feed",    route: "/(tabs)/feed",    label: "Лента",    icon: "image"          as const },
   { name: "index",   route: "/(tabs)/",        label: "Главная",  icon: "home"           as const },
@@ -37,19 +37,21 @@ const TABS = [
 ];
 const TAB_COUNT = TABS.length;
 
-/* ─── Constants ───────────────────────────────────────────── */
-const SIDE_MARGIN   = 20;   // left/right offset of the bar from screen edges
-const PILL_INSET    = 5;    // space between pill edge and bar edge (top/bottom)
-const PILL_PAD      = 5;    // horizontal shrink of pill vs full tab width
-const NORMAL_H      = 64;
-const COMPACT_H     = 48;
+/* ─── Layout constants ─────────────────────────────────────── */
+const SIDE_MARGIN = 20;   // left / right from screen edges
+const PILL_PAD    = 6;    // horizontal inset from tab cell edge
+const PILL_INSET  = 5;    // vertical inset (top + bottom)
+const NORMAL_H    = 64;
+const COMPACT_H   = 48;
 
-/* Leading edge: fast + slight overshoot for the "liquid pull" feel */
-const LEAD  = { damping: 14, stiffness: 260, mass: 0.75 };
-/* Trailing edge: slow + no overshoot, lags behind */
-const LAG   = { damping: 24, stiffness: 180, mass: 1.1  };
-/* Scroll-shrink spring */
-const SHRINK = { damping: 22, stiffness: 280, mass: 0.8  };
+/* ─── Spring configs ───────────────────────────────────────── */
+/** Pill center moves smoothly with slight overshoot */
+const POS_SPRING    = { damping: 15, stiffness: 280, mass: 0.85 };
+/** Stretch peaks quickly then releases */
+const STRETCH_IN    = { damping: 10, stiffness: 500, mass: 0.5  };
+const STRETCH_OUT   = { damping: 18, stiffness: 220, mass: 0.9  };
+/** Bar height collapse */
+const HEIGHT_SPRING = { damping: 22, stiffness: 280, mass: 0.8  };
 
 const glassAvail = Platform.OS === "ios" && isGlassEffectAPIAvailable();
 
@@ -59,80 +61,80 @@ function tabIndexFromSegments(segs: string[]): number {
   if (s === "learn")   return 2;
   if (s === "chat")    return 3;
   if (s === "profile") return 4;
-  return 1;
+  return 1; // home / (tabs)/
 }
 
-/* ─── Component ───────────────────────────────────────────── */
+/* ─── Component ─────────────────────────────────────────────── */
 export function FloatingTabBar() {
-  const { width }    = useWindowDimensions();
-  const insets       = useSafeAreaInsets();
-  const colors       = useColors();
-  const router       = useRouter();
-  const segments     = useSegments();
-  const { user }     = useApp();
+  const { width }      = useWindowDimensions();
+  const insets         = useSafeAreaInsets();
+  const colors         = useColors();
+  const router         = useRouter();
+  const segments       = useSegments();
+  const { user }       = useApp();
   const { isScrolled } = useTabBar();
 
   const activeIdx = tabIndexFromSegments(segments as string[]);
 
-  /* Tab geometry (recalculated on orientation change) */
-  const TAB_W   = (width - SIDE_MARGIN * 2) / TAB_COUNT;
-  const PILL_W  = TAB_W - PILL_PAD * 2;
+  /** Width of a single tab cell inside the bar */
+  const tabW = (width - SIDE_MARGIN * 2) / TAB_COUNT;
+  /** Natural pill width */
+  const pillNatW = tabW - PILL_PAD * 2;
 
-  /* ── Liquid pill ─────────────────────────────────────────── */
-  const pillL = useSharedValue(activeIdx * TAB_W + PILL_PAD);
-  const pillR = useSharedValue(activeIdx * TAB_W + TAB_W - PILL_PAD);
+  /** Keep latest tabW in a ref so callbacks never go stale */
+  const tabWRef = useRef(tabW);
+  useEffect(() => { tabWRef.current = tabW; }, [tabW]);
 
-  /* Track which index we're visually AT (for direction logic) */
+  /* ── Pill animation: center-X + width ── */
+  const pillCX = useSharedValue(activeIdx * tabW + tabW / 2);   // center X
+  const pillW  = useSharedValue(pillNatW);                       // current width
+
+  /* Previous active index to detect direction */
   const prevIdxRef = useRef(activeIdx);
-  /* Stable ref to TAB_W so effects always use the current value */
-  const tabWRef = useRef(TAB_W);
-  useEffect(() => { tabWRef.current = TAB_W; }, [TAB_W]);
 
   const animatePill = useCallback((toIdx: number, fromIdx: number) => {
-    const tw = tabWRef.current;
-    const newL = toIdx * tw + PILL_PAD;
-    const newR = toIdx * tw + tw - PILL_PAD;
-    const goingRight = toIdx > fromIdx;
+    const tw   = tabWRef.current;
+    const natW = tw - PILL_PAD * 2;
+    const dist = Math.abs(toIdx - fromIdx);
+    /** How much the pill stretches — more tabs = more stretch */
+    const extra = Math.min(dist * tw * 0.4, tw * 0.9);
 
-    if (goingRight) {
-      /* Right edge leaps ahead; left edge follows */
-      pillR.value = withSpring(newR, LEAD);
-      pillL.value = withSpring(newL, LAG);
-    } else {
-      /* Left edge leaps ahead; right edge follows */
-      pillL.value = withSpring(newL, LEAD);
-      pillR.value = withSpring(newR, LAG);
-    }
-  }, [pillL, pillR]);
+    pillCX.value = withSpring(toIdx * tw + tw / 2, POS_SPRING);
 
-  /* Animate pill when segments-driven navigation changes the active tab
-     (e.g. hardware back, programmatic push from another screen) */
+    pillW.value = withSequence(
+      withSpring(natW + extra, STRETCH_IN),
+      withSpring(natW, STRETCH_OUT),
+    );
+  }, [pillCX, pillW]);
+
+  /* Sync pill when routing changes outside of tap (back button, deep link) */
   useEffect(() => {
     if (prevIdxRef.current === activeIdx) return;
     animatePill(activeIdx, prevIdxRef.current);
     prevIdxRef.current = activeIdx;
   }, [activeIdx, animatePill]);
 
-  /* ── Scroll-shrink ─────────────────────────────────────── */
+  /* ── Scroll-shrink ──────────────────────────────────────────── */
   const barH    = useSharedValue(NORMAL_H);
   const labelOp = useSharedValue(1);
 
   useEffect(() => {
-    barH.value    = withSpring(isScrolled ? COMPACT_H : NORMAL_H, SHRINK);
-    labelOp.value = withTiming(isScrolled ? 0 : 1, { duration: 140 });
+    barH.value    = withSpring(isScrolled ? COMPACT_H : NORMAL_H, HEIGHT_SPRING);
+    labelOp.value = withTiming(isScrolled ? 0 : 1, { duration: 150 });
   }, [isScrolled, barH, labelOp]);
 
-  /* ── Animated styles ────────────────────────────────────── */
+  /* ── Animated styles ────────────────────────────────────────── */
   const barStyle = useAnimatedStyle(() => ({ height: barH.value }));
 
+  /** Derive left from center — keeps pill horizontally centered in its cell */
   const pillStyle = useAnimatedStyle(() => ({
-    left:  pillL.value,
-    width: pillR.value - pillL.value,
+    left:  pillCX.value - pillW.value / 2,
+    width: pillW.value,
   }));
 
   const labelStyle = useAnimatedStyle(() => ({ opacity: labelOp.value }));
 
-  /* ── Tab press ──────────────────────────────────────────── */
+  /* ── Tab press ──────────────────────────────────────────────── */
   const onTabPress = useCallback(
     (route: string, idx: number) => {
       if (idx !== prevIdxRef.current) {
@@ -149,11 +151,9 @@ export function FloatingTabBar() {
   const bottomOffset = (insets.bottom > 0 ? insets.bottom : 8) + 12;
 
   return (
-    <Animated.View
-      style={[styles.container, { bottom: bottomOffset }, barStyle]}
-    >
-      {/* ── Glass background layer (clipped to pill shape) ── */}
-      <View style={[StyleSheet.absoluteFillObject, styles.glassClip]}>
+    <Animated.View style={[styles.wrapper, { bottom: bottomOffset }, barStyle]}>
+      {/* ── Glass / blur fill ─────────────────────────────────── */}
+      <View style={styles.glassWrap}>
         {glassAvail ? (
           <GlassContainer style={StyleSheet.absoluteFillObject}>
             <GlassView
@@ -163,25 +163,16 @@ export function FloatingTabBar() {
             />
           </GlassContainer>
         ) : (
-          <BlurView intensity={90} tint="light" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={85} tint="light" style={StyleSheet.absoluteFillObject} />
         )}
-        <View style={[StyleSheet.absoluteFillObject, styles.overlay]} />
-
-        {/* ── Liquid indicator ────────────────────────────── */}
-        <Animated.View
-          style={[
-            styles.liquidPill,
-            {
-              backgroundColor: "rgba(200,160,100,0.20)",
-              borderColor: "rgba(200,160,100,0.45)",
-            },
-            pillStyle,
-          ]}
-        />
+        <View style={[StyleSheet.absoluteFillObject, styles.tint]} />
       </View>
 
-      {/* ── Tab buttons ────────────────────────────────────── */}
-      <View style={styles.tabRow}>
+      {/* ── Liquid pill indicator (OUTSIDE the clipped area) ─── */}
+      <Animated.View style={[styles.pill, pillStyle]} />
+
+      {/* ── Tab buttons ─────────────────────────────────────── */}
+      <View style={styles.row}>
         {TABS.map((tab, idx) => {
           const active = idx === activeIdx;
           return (
@@ -189,19 +180,19 @@ export function FloatingTabBar() {
               key={tab.name}
               style={styles.tabBtn}
               onPress={() => onTabPress(tab.route, idx)}
-              activeOpacity={0.65}
+              activeOpacity={0.7}
             >
               <Feather
                 name={tab.icon}
-                size={20}
+                size={active ? 22 : 20}
                 color={active ? colors.accent : colors.mutedForeground}
               />
               <Animated.Text
                 numberOfLines={1}
                 style={[
-                  styles.tabLabel,
+                  styles.label,
                   {
-                    color: active ? colors.accent : colors.mutedForeground,
+                    color:      active ? colors.accent : colors.mutedForeground,
                     fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular",
                   },
                   labelStyle,
@@ -218,36 +209,38 @@ export function FloatingTabBar() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     position: "absolute",
     left: SIDE_MARGIN,
     right: SIDE_MARGIN,
     borderRadius: 999,
     zIndex: 100,
+    overflow: "hidden",           // clips the blur AND the pill together
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.72)",
-    shadowColor: "#6B5A3E",
+    borderColor: "rgba(255,255,255,0.75)",
+    shadowColor: "#5A4020",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
     elevation: 14,
   },
-  glassClip: {
-    borderRadius: 999,
-    overflow: "hidden",
+  glassWrap: {
     ...StyleSheet.absoluteFillObject,
   },
-  overlay: {
-    backgroundColor: "rgba(250,246,240,0.48)",
+  tint: {
+    backgroundColor: "rgba(252,247,241,0.52)",
   },
-  liquidPill: {
+  /** Liquid pill — absolutely positioned directly in wrapper */
+  pill: {
     position: "absolute",
     top: PILL_INSET,
     bottom: PILL_INSET,
     borderRadius: 999,
+    backgroundColor: "rgba(185,145,85,0.22)",
     borderWidth: 1,
+    borderColor: "rgba(185,145,85,0.50)",
   },
-  tabRow: {
+  row: {
     flex: 1,
     flexDirection: "row",
   },
@@ -257,9 +250,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 2,
     paddingVertical: 6,
-    zIndex: 1, // above the liquid pill
   },
-  tabLabel: {
+  label: {
     fontSize: 9,
     letterSpacing: 0.1,
   },
