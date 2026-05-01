@@ -1,9 +1,10 @@
 /**
  * Full-screen Instagram-style story viewer.
- * - Progress segments auto-advance every 4 s
- * - Tap left half = previous, tap right half = next
- * - Swipe down = close
- * - Each story can have multiple frames (post images of that employee)
+ * ─ Progress segments auto-advance every 4 s
+ * ─ Tap left half = previous, tap right half = next
+ * ─ Swipe down = close (spring-back if not far enough)
+ * ─ Cross-fade between frames (smooth dissolve)
+ * ─ Calls onViewed(id) when a story is first seen
  */
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -13,8 +14,8 @@ import {
   Animated,
   Dimensions,
   Modal,
-  Platform,
   PanResponder,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -25,14 +26,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar } from "./Avatar";
 
 const { width: W, height: H } = Dimensions.get("window");
-const FRAME_DURATION = 4000; // ms per frame
+const FRAME_DURATION = 4000;
 
 export type StoryItem = {
   id: string;
   name: string;
   initials: string;
   specialty: string;
-  frames: string[]; // image URLs; empty = use gradient
+  frames: string[];
 };
 
 type Props = {
@@ -40,9 +41,10 @@ type Props = {
   initialIndex: number;
   visible: boolean;
   onClose: () => void;
+  onViewed?: (storyId: string) => void;
 };
 
-const ACCENT_COLORS = [
+const ACCENT_COLORS: [string, string][] = [
   ["#FF6B9D", "#C44DFF"],
   ["#4D79FF", "#00C6FF"],
   ["#00C9A7", "#10B981"],
@@ -51,99 +53,146 @@ const ACCENT_COLORS = [
   ["#C8A064", "#8B5E3C"],
 ];
 
-export function StoryViewer({ stories, initialIndex, visible, onClose }: Props) {
+export function StoryViewer({ stories, initialIndex, visible, onClose, onViewed }: Props) {
   const insets = useSafeAreaInsets();
+
+  /* ── State ─────────────────────────────────────────────── */
   const [storyIdx, setStoryIdx] = useState(initialIndex);
   const [frameIdx, setFrameIdx] = useState(0);
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPaused = useRef(false);
+  const [imgA, setImgA]     = useState<string | null>(null);   // current displayed image
+  const [imgB, setImgB]     = useState<string | null>(null);   // incoming image
+  const progressAnim  = useRef(new Animated.Value(0)).current;
+  const crossFadeAnim = useRef(new Animated.Value(1)).current;  // 1 = show imgA, 0 = show imgB
+  const isPaused      = useRef(false);
+  const timerRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const storyIdxRef   = useRef(storyIdx);
+  const frameIdxRef   = useRef(frameIdx);
 
-  const story = stories[storyIdx];
-  const frames = story?.frames ?? [];
+  storyIdxRef.current = storyIdx;
+  frameIdxRef.current = frameIdx;
+
+  const story      = stories[storyIdx];
+  const frames     = story?.frames ?? [];
   const totalFrames = Math.max(frames.length, 1);
 
-  /* ── Reset when opening or switching story ─── */
-  const startFrame = useCallback((fi: number) => {
-    setFrameIdx(fi);
+  /* ── Cross-fade helper ─────────────────────────────────── */
+  const crossFadeTo = useCallback((url: string | null) => {
+    setImgB(url);
+    crossFadeAnim.setValue(1);
+    Animated.timing(crossFadeAnim, {
+      toValue: 0,
+      duration: 320,
+      useNativeDriver: true,
+    }).start(() => {
+      setImgA(url);
+      crossFadeAnim.setValue(1);
+      setImgB(null);
+    });
+  }, [crossFadeAnim]);
+
+  /* ── Start a specific frame ─────────────────────────────── */
+  const startFrame = useCallback((si: number, fi: number) => {
+    const s = stories[si];
+    const fr = s?.frames ?? [];
+    const url = fr[fi] ?? null;
+
+    crossFadeTo(url);
+    progressAnim.stopAnimation();
     progressAnim.setValue(0);
     if (timerRef.current) clearTimeout(timerRef.current);
+
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: FRAME_DURATION,
       useNativeDriver: false,
     }).start(({ finished }) => {
-      if (finished && !isPaused.current) advance();
+      if (finished && !isPaused.current) {
+        goForward(si, fi);
+      }
     });
-  }, [progressAnim]); // eslint-disable-line
 
-  const advance = useCallback(() => {
-    setStoryIdx((si) => {
-      const s = stories[si];
-      const fr = Math.max((s?.frames ?? []).length, 1);
-      setFrameIdx((fi) => {
-        if (fi + 1 < fr) {
-          startFrame(fi + 1);
-          return fi; // will be set by startFrame
-        } else if (si + 1 < stories.length) {
-          const next = si + 1;
-          setStoryIdx(next);
-          startFrame(0);
-          return 0;
-        } else {
-          onClose();
-          return fi;
-        }
-      });
-      return si;
-    });
-  }, [stories, onClose, startFrame]);
+    // Mark story as viewed
+    if (s) onViewed?.(s.id);
+  }, [stories, crossFadeTo, progressAnim, onViewed]); // eslint-disable-line
 
-  const goBack = useCallback(() => {
-    setStoryIdx((si) => {
-      setFrameIdx((fi) => {
-        if (fi > 0) {
-          startFrame(fi - 1);
-          return fi - 1;
-        } else if (si > 0) {
-          const prev = si - 1;
-          const prevFrames = Math.max((stories[prev]?.frames ?? []).length, 1);
-          setStoryIdx(prev);
-          startFrame(prevFrames - 1);
-          return prevFrames - 1;
-        }
-        return fi;
-      });
-      return si;
-    });
+  /* ── Navigate forward ──────────────────────────────────── */
+  const goForward = useCallback((si: number, fi: number) => {
+    const s = stories[si];
+    const totalFr = Math.max((s?.frames ?? []).length, 1);
+    if (fi + 1 < totalFr) {
+      setFrameIdx(fi + 1);
+      startFrame(si, fi + 1);
+    } else if (si + 1 < stories.length) {
+      setStoryIdx(si + 1);
+      setFrameIdx(0);
+      startFrame(si + 1, 0);
+    } else {
+      onClose();
+    }
+  }, [stories, startFrame, onClose]);
+
+  /* ── Navigate backward ─────────────────────────────────── */
+  const goBack = useCallback((si: number, fi: number) => {
+    if (fi > 0) {
+      setFrameIdx(fi - 1);
+      startFrame(si, fi - 1);
+    } else if (si > 0) {
+      const prev = si - 1;
+      const prevFr = Math.max((stories[prev]?.frames ?? []).length, 1);
+      setStoryIdx(prev);
+      setFrameIdx(prevFr - 1);
+      startFrame(prev, prevFr - 1);
+    }
   }, [stories, startFrame]);
 
-  /* ── Init / visible change ─────────────────── */
+  /* ── Tap handlers (use refs to avoid stale closures) ────── */
+  const handleTapRight = useCallback(() => {
+    goForward(storyIdxRef.current, frameIdxRef.current);
+  }, [goForward]);
+
+  const handleTapLeft = useCallback(() => {
+    goBack(storyIdxRef.current, frameIdxRef.current);
+  }, [goBack]);
+
+  /* ── Init / re-open ─────────────────────────────────────── */
   useEffect(() => {
     if (visible) {
-      setStoryIdx(initialIndex);
       isPaused.current = false;
-      startFrame(0);
+      setStoryIdx(initialIndex);
+      setFrameIdx(0);
+      const url = stories[initialIndex]?.frames?.[0] ?? null;
+      setImgA(url);
+      setImgB(null);
+      crossFadeAnim.setValue(1);
+      startFrame(initialIndex, 0);
     } else {
       progressAnim.stopAnimation();
       if (timerRef.current) clearTimeout(timerRef.current);
     }
   }, [visible, initialIndex]); // eslint-disable-line
 
-  /* ── Swipe-down to close (PanResponder) ───── */
+  /* ── Swipe-down to close ────────────────────────────────── */
   const swipeY = useRef(new Animated.Value(0)).current;
   const pan = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10 && g.dy > 0,
-      onPanResponderGrant: () => { isPaused.current = true; progressAnim.stopAnimation(); },
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 12 && g.dy > 0,
+      onPanResponderGrant: () => {
+        isPaused.current = true;
+        progressAnim.stopAnimation();
+      },
       onPanResponderMove: Animated.event([null, { dy: swipeY }], { useNativeDriver: false }),
       onPanResponderRelease: (_, g) => {
-        if (g.dy > 100) {
-          Animated.timing(swipeY, { toValue: H, duration: 250, useNativeDriver: false }).start(onClose);
+        if (g.dy > 110 || g.vy > 1.4) {
+          Animated.timing(swipeY, { toValue: H, duration: 280, useNativeDriver: false }).start(onClose);
         } else {
-          Animated.spring(swipeY, { toValue: 0, useNativeDriver: false }).start(() => {
+          Animated.spring(swipeY, {
+            toValue: 0,
+            damping: 20,
+            stiffness: 220,
+            useNativeDriver: false,
+          }).start(() => {
             isPaused.current = false;
-            startFrame(frameIdx);
+            startFrame(storyIdxRef.current, frameIdxRef.current);
           });
         }
       },
@@ -153,7 +202,6 @@ export function StoryViewer({ stories, initialIndex, visible, onClose }: Props) 
   if (!story) return null;
 
   const colors = ACCENT_COLORS[storyIdx % ACCENT_COLORS.length];
-  const imageUrl = frames[frameIdx];
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -161,10 +209,38 @@ export function StoryViewer({ stories, initialIndex, visible, onClose }: Props) 
         style={[styles.root, { transform: [{ translateY: swipeY }] }]}
         {...pan.panHandlers}
       >
-        {/* ── Background ───────────────────────────── */}
-        {imageUrl ? (
-          <Image source={imageUrl} style={StyleSheet.absoluteFillObject} contentFit="cover" />
-        ) : (
+        {/* ── Background: Layer A (current) + Layer B (incoming) ── */}
+        {!imgA && !imgB ? (
+          <LinearGradient
+            colors={[colors[0], colors[1]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        ) : null}
+
+        {/* Layer A — stable current */}
+        {imgA ? (
+          <Animated.View
+            style={[StyleSheet.absoluteFillObject, { opacity: crossFadeAnim }]}
+            pointerEvents="none"
+          >
+            <Image source={imgA} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+          </Animated.View>
+        ) : null}
+
+        {/* Layer B — incoming (cross-fades over A) */}
+        {imgB ? (
+          <Animated.View
+            style={[StyleSheet.absoluteFillObject, { opacity: crossFadeAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}
+            pointerEvents="none"
+          >
+            <Image source={imgB} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+          </Animated.View>
+        ) : null}
+
+        {/* No-image gradient backdrop */}
+        {!imgA && (
           <LinearGradient
             colors={[colors[0], colors[1]]}
             start={{ x: 0, y: 0 }}
@@ -173,61 +249,62 @@ export function StoryViewer({ stories, initialIndex, visible, onClose }: Props) 
           />
         )}
 
-        {/* Dark overlay for readability */}
+        {/* Dark scrim for readability */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.52)", "transparent", "rgba(0,0,0,0.6)"]}
-          locations={[0, 0.4, 1]}
+          colors={["rgba(0,0,0,0.55)", "transparent", "rgba(0,0,0,0.62)"]}
+          locations={[0, 0.42, 1]}
           style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
         />
 
-        {/* ── Progress bars ────────────────────────── */}
-        <View style={[styles.progressRow, { paddingTop: insets.top + 10 }]}>
+        {/* ── Progress bars ─────────────────────────────────── */}
+        <View style={[styles.progressRow, { paddingTop: insets.top + (Platform.OS === "ios" ? 6 : 14) }]}>
           {Array.from({ length: totalFrames }).map((_, i) => (
             <View key={i} style={styles.progressTrack}>
               {i < frameIdx ? (
-                <View style={[styles.progressFill, { width: "100%", backgroundColor: "rgba(255,255,255,0.95)" }]} />
+                <View style={[styles.progressFill, { width: "100%", backgroundColor: "rgba(255,255,255,0.92)" }]} />
               ) : i === frameIdx ? (
                 <Animated.View
                   style={[
                     styles.progressFill,
                     {
                       width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
-                      backgroundColor: "rgba(255,255,255,0.95)",
+                      backgroundColor: "rgba(255,255,255,0.92)",
                     },
                   ]}
                 />
               ) : (
-                <View style={[styles.progressFill, { width: 0 }]} />
+                <View style={[styles.progressFill, { width: "0%" }]} />
               )}
             </View>
           ))}
         </View>
 
-        {/* ── Header: avatar + name + close ────────── */}
+        {/* ── Header ────────────────────────────────────────── */}
         <View style={styles.header}>
           <Avatar initials={story.initials} size={38} />
           <View style={{ flex: 1 }}>
             <Text style={styles.storyName}>{story.name}</Text>
             <Text style={styles.storySpec}>{story.specialty}</Text>
           </View>
-          <Pressable onPress={onClose} hitSlop={16} style={styles.closeBtn}>
-            <Feather name="x" size={22} color="rgba(255,255,255,0.9)" />
+          <Pressable onPress={onClose} hitSlop={18} style={styles.closeBtn}>
+            <Feather name="x" size={22} color="rgba(255,255,255,0.88)" />
           </Pressable>
         </View>
 
-        {/* Content overlay (if no image, show a centered label) */}
-        {!imageUrl && (
-          <View style={styles.noImageContent}>
+        {/* No-image center content */}
+        {!imgA && !imgB && (
+          <View style={styles.noImageContent} pointerEvents="none">
             <Text style={styles.noImageInitials}>{story.initials}</Text>
             <Text style={styles.noImageName}>{story.name}</Text>
             <Text style={styles.noImageSpec}>{story.specialty}</Text>
           </View>
         )}
 
-        {/* ── Tap zones: left = back, right = next ─── */}
+        {/* ── Tap zones ─────────────────────────────────────── */}
         <View style={styles.tapZones} pointerEvents="box-none">
-          <Pressable style={styles.tapLeft} onPress={goBack} />
-          <Pressable style={styles.tapRight} onPress={advance} />
+          <Pressable style={styles.tapLeft}  onPress={handleTapLeft} />
+          <Pressable style={styles.tapRight} onPress={handleTapRight} />
         </View>
       </Animated.View>
     </Modal>
@@ -235,10 +312,7 @@ export function StoryViewer({ stories, initialIndex, visible, onClose }: Props) 
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
+  root: { flex: 1, backgroundColor: "#000" },
   progressRow: {
     flexDirection: "row",
     gap: 4,
@@ -249,14 +323,11 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 2.5,
-    backgroundColor: "rgba(255,255,255,0.35)",
+    backgroundColor: "rgba(255,255,255,0.32)",
     borderRadius: 2,
     overflow: "hidden",
   },
-  progressFill: {
-    height: "100%",
-    borderRadius: 2,
-  },
+  progressFill: { height: "100%", borderRadius: 2 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -265,48 +336,19 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     zIndex: 10,
   },
-  storyName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#fff",
-    letterSpacing: -0.2,
-  },
-  storySpec: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.75)",
-    marginTop: 1,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  storyName: { fontSize: 14, fontWeight: "600", color: "#fff", letterSpacing: -0.2 },
+  storySpec:  { fontSize: 11, color: "rgba(255,255,255,0.72)", marginTop: 1 },
+  closeBtn:   { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   noImageContent: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  noImageInitials: {
-    fontSize: 72,
-    color: "rgba(255,255,255,0.9)",
-    fontWeight: "700",
-  },
-  noImageName: {
-    fontSize: 22,
-    color: "#fff",
-    fontWeight: "600",
-  },
-  noImageSpec: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.75)",
-  },
-  tapZones: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-    zIndex: 5,
-  },
-  tapLeft: { flex: 1 },
+  noImageInitials: { fontSize: 72, color: "rgba(255,255,255,0.88)", fontWeight: "700" },
+  noImageName:     { fontSize: 22, color: "#fff", fontWeight: "600" },
+  noImageSpec:     { fontSize: 14, color: "rgba(255,255,255,0.72)" },
+  tapZones: { ...StyleSheet.absoluteFillObject, flexDirection: "row", zIndex: 5 },
+  tapLeft:  { flex: 1 },
   tapRight: { flex: 2 },
 });

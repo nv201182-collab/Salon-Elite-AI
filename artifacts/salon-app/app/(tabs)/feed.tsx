@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar } from "@/components/Avatar";
 import { Chip } from "@/components/Chip";
 import { EmptyState } from "@/components/EmptyState";
+import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
 import { PostCard } from "@/components/PostCard";
 import { PressableScale } from "@/components/PressableScale";
@@ -42,6 +43,16 @@ export default function FeedScreen() {
   const [filter, setFilter] = useState<Post["category"] | "all">("all");
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [storyViewerIdx, setStoryViewerIdx] = useState<number | null>(null);
+  const [viewedStories, setViewedStories] = useState<Set<string>>(new Set());
+
+  const handleStoryViewed = useCallback((id: string) => {
+    setViewedStories((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 55 }).current;
   const onViewableItemsChanged = useRef(
@@ -95,7 +106,7 @@ export default function FeedScreen() {
   }, [tabOnScroll]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <FocusFadeView style={{ flex: 1 }}>
       <LiquidBg />
       <FlatList
         data={filtered}
@@ -135,34 +146,31 @@ export default function FeedScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.storiesRow}
             >
-              {stories.map((s, idx) => (
+              {stories.map((s, idx) => {
+                const isYou     = s.id === "you";
+                const isViewed  = !isYou && viewedStories.has(s.id);
+                const ringColors: [string, string] = isYou
+                  ? [colors.pink, colors.purple]
+                  : isViewed
+                    ? ["rgba(180,180,180,0.5)", "rgba(140,140,140,0.4)"]
+                    : ["#C8A064", "#8B5E3C"];
+                return (
                 <PressableScale
                   key={s.id}
                   onPress={() => {
-                    if (s.id === "you") { router.push("/post/new"); return; }
+                    if (isYou) { router.push("/post/new"); return; }
                     setStoryViewerIdx(idx);
                   }}
                   scaleTo={0.95}
                 >
                   <View style={styles.storyItem}>
-                    {/* Ring — gold for you, pink→purple for others */}
                     <LinearGradient
-                      colors={s.id === "you" ? [colors.pink, colors.purple] : ["#C8A064", "#8B5E3C"]}
+                      colors={ringColors}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
-                      style={styles.storyRing}
+                      style={[styles.storyRing, isViewed && styles.storyRingViewed]}
                     >
                       <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
-                        {/* If employee has story frames, show thumbnail */}
-                        {!s.id.startsWith("you") && s.frames.length > 0 ? (
-                          <View style={StyleSheet.absoluteFillObject}>
-                            {/* Small preview image as background */}
-                            <View style={[StyleSheet.absoluteFillObject, { borderRadius: 28, overflow: "hidden" }]}>
-                              {/* eslint-disable-next-line @typescript-eslint/no-require-imports */}
-                              <Avatar initials={s.initials} size={56} />
-                            </View>
-                          </View>
-                        ) : null}
                         <Avatar initials={s.initials} size={56} />
                         {s.id === "you" ? (
                           <View
@@ -189,7 +197,8 @@ export default function FeedScreen() {
                     </Text>
                   </View>
                 </PressableScale>
-              ))}
+                );
+              })}
             </ScrollView>
 
             {/* ── Trends ──────────────────────────────────── */}
@@ -264,8 +273,9 @@ export default function FeedScreen() {
         initialIndex={storyViewerIdx ?? 0}
         visible={storyViewerIdx !== null}
         onClose={() => setStoryViewerIdx(null)}
+        onViewed={handleStoryViewed}
       />
-    </View>
+    </FocusFadeView>
   );
 }
 
@@ -290,6 +300,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
     padding: 2.5,
   },
+  storyRingViewed: { opacity: 0.55 },
   storyInner: {
     flex: 1, alignSelf: "stretch", borderRadius: 30,
     alignItems: "center", justifyContent: "center",

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Chip } from "@/components/Chip";
 import { CourseCard } from "@/components/CourseCard";
+import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
 import { useData } from "@/contexts/DataContext";
 import { useTabBar } from "@/contexts/TabBarContext";
@@ -45,7 +46,7 @@ export default function LearnScreen() {
   }, [onScroll]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <FocusFadeView style={{ flex: 1 }}>
       <LiquidBg />
       <ScrollView
         style={styles.scroll}
@@ -74,7 +75,7 @@ export default function LearnScreen() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </FocusFadeView>
   );
 }
 

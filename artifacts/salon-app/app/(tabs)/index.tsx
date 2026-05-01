@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar } from "@/components/Avatar";
 import { GlassCard } from "@/components/GlassCard";
 import { LevelBar } from "@/components/LevelBar";
+import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
 import { PressableScale } from "@/components/PressableScale";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -69,7 +70,7 @@ export default function HomeScreen() {
   }, [onScroll]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <FocusFadeView style={{ flex: 1 }}>
       <LiquidBg />
       <ScrollView
         style={styles.scroll}
@@ -244,7 +245,7 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </FocusFadeView>
   );
 }
 

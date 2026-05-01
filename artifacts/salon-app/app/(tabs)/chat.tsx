@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ChatRow } from "@/components/ChatRow";
 import { Chip } from "@/components/Chip";
+import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
 import { useData } from "@/contexts/DataContext";
 import { useTabBar } from "@/contexts/TabBarContext";
@@ -48,7 +49,7 @@ export default function ChatTab() {
   }, [onScroll]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <FocusFadeView style={{ flex: 1 }}>
       <LiquidBg />
       <SectionList
         style={styles.list}
@@ -79,7 +80,7 @@ export default function ChatTab() {
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </FocusFadeView>
   );
 }
 

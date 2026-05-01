@@ -9,6 +9,7 @@ import { Avatar } from "@/components/Avatar";
 import { Chip } from "@/components/Chip";
 import { GlassCard } from "@/components/GlassCard";
 import { LevelBar } from "@/components/LevelBar";
+import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
 import { PressableScale } from "@/components/PressableScale";
 import { StatCard } from "@/components/StatCard";
@@ -63,7 +64,7 @@ export default function ProfileScreen() {
   }, [onScroll]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <FocusFadeView style={{ flex: 1 }}>
       <LiquidBg />
       <ScrollView
         style={{ flex: 1 }}
@@ -186,7 +187,7 @@ export default function ProfileScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </FocusFadeView>
   );
 }
 
