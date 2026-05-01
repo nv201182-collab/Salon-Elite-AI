@@ -798,5 +798,5 @@ export const ACHIEVEMENTS_SEED: Achievement[] = [
   { id: "a_streak_week", title: "Неделя без перерыва", description: "Заходите в приложение 7 дней подряд.", icon: "zap", reward: 150, threshold: 7 },
   { id: "a_top_specialist", title: "Уровень: Специалист", description: "Достигли 1500 баллов.", icon: "star", reward: 300, threshold: 1500 },
   { id: "a_top_expert", title: "Уровень: Эксперт", description: "Достигли 4000 баллов.", icon: "trending-up", reward: 500, threshold: 4000 },
-  { id: "a_top_master", title: "Топ-мастер APIA", description: "Достигли 8000 баллов.", icon: "crown", reward: 1000, threshold: 8000 },
+  { id: "a_top_master", title: "Топ-мастер APIA", description: "Достигли 8000 баллов.", icon: "award", reward: 1000, threshold: 8000 },
 ];
