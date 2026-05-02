@@ -6,15 +6,18 @@
  * - GET / without expo-platform → landing page HTML
  * Everything else falls through to static file serving from ./static-build/.
  *
- * Zero external dependencies — uses only Node.js built-ins (http, fs, path).
+ * Auto-build: if static-build is missing, triggers build.js automatically.
+ * Zero external dependencies — uses only Node.js built-ins.
  */
 
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 
 const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
 const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
+const BUILD_SCRIPT = path.resolve(__dirname, "..", "scripts", "build.js");
 const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 
 const MIME_TYPES = {
@@ -35,6 +38,51 @@ const MIME_TYPES = {
   ".map": "application/json",
 };
 
+// Build state machine
+let buildState = "unknown"; // "unknown" | "building" | "ready" | "error"
+
+function isBuilt() {
+  return (
+    fs.existsSync(path.join(STATIC_ROOT, "ios", "manifest.json")) &&
+    fs.existsSync(path.join(STATIC_ROOT, "android", "manifest.json"))
+  );
+}
+
+function triggerBuild() {
+  if (buildState === "building") return;
+  buildState = "building";
+  console.log("[serve] static-build missing — starting build automatically...");
+
+  const build = spawn("node", [BUILD_SCRIPT], {
+    cwd: path.resolve(__dirname, ".."),
+    stdio: "inherit",
+    env: process.env,
+  });
+
+  build.on("close", (code) => {
+    if (code === 0) {
+      buildState = "ready";
+      console.log("[serve] Build complete. Serving.");
+    } else {
+      buildState = "error";
+      console.error(`[serve] Build failed (exit ${code}). Check logs above.`);
+    }
+  });
+
+  build.on("error", (err) => {
+    buildState = "error";
+    console.error("[serve] Failed to start build process:", err.message);
+  });
+}
+
+// Check on startup
+if (isBuilt()) {
+  buildState = "ready";
+  console.log("[serve] static-build found. Ready.");
+} else {
+  triggerBuild();
+}
+
 function getAppName() {
   try {
     const appJsonPath = path.resolve(__dirname, "..", "app.json");
@@ -46,12 +94,37 @@ function getAppName() {
 }
 
 function serveManifest(platform, res) {
+  if (buildState === "building") {
+    res.writeHead(503, {
+      "content-type": "application/json",
+      "retry-after": "30",
+    });
+    res.end(
+      JSON.stringify({
+        error: "App is building. Please retry in ~2 minutes.",
+        state: "building",
+      })
+    );
+    return;
+  }
+
+  if (buildState === "error") {
+    res.writeHead(500, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: "Build failed. Check server logs.",
+        state: "error",
+      })
+    );
+    return;
+  }
+
   const manifestPath = path.join(STATIC_ROOT, platform, "manifest.json");
 
   if (!fs.existsSync(manifestPath)) {
     res.writeHead(404, { "content-type": "application/json" });
     res.end(
-      JSON.stringify({ error: `Manifest not found for platform: ${platform}` }),
+      JSON.stringify({ error: `Manifest not found for platform: ${platform}` })
     );
     return;
   }
@@ -72,10 +145,18 @@ function serveLandingPage(req, res, landingPageTemplate, appName) {
   const baseUrl = `${protocol}://${host}`;
   const expsUrl = `${host}`;
 
+  const buildBanner =
+    buildState !== "ready"
+      ? `<p style="background:#f0ad4e;color:#000;padding:12px;border-radius:8px;margin-bottom:16px;">
+           ⏳ Приложение собирается (${buildState}). Это займёт ~2 минуты. Обновите страницу.
+         </p>`
+      : "";
+
   const html = landingPageTemplate
     .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
     .replace(/EXPS_URL_PLACEHOLDER/g, expsUrl)
-    .replace(/APP_NAME_PLACEHOLDER/g, appName);
+    .replace(/APP_NAME_PLACEHOLDER/g, appName)
+    .replace("</body>", `${buildBanner}</body>`);
 
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   res.end(html);
@@ -131,5 +212,8 @@ const server = http.createServer((req, res) => {
 
 const port = parseInt(process.env.PORT || "3000", 10);
 server.listen(port, "0.0.0.0", () => {
-  console.log(`Serving static Expo build on port ${port}`);
+  console.log(`[serve] Listening on port ${port}`);
+  if (buildState === "building") {
+    console.log("[serve] Build in progress — manifest requests will return 503 until done.");
+  }
 });

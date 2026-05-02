@@ -11,6 +11,16 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/salon-app && node server/serve.js"
+waitForPort = 8081
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
