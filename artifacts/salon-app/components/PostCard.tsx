@@ -7,10 +7,10 @@
  *  5. Likes summary "Нравится X людям"
  *  6. Caption + last comment inline
  */
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import React, { useState } from "react";
-import { Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -28,8 +28,14 @@ import { EMPLOYEES_SEED, type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 import { Avatar } from "./Avatar";
 import { CommentsSheet } from "./CommentsSheet";
+import { HeartBurst } from "./HeartBurst";
 import { PressableScale } from "./PressableScale";
 import { VideoInFeed } from "./VideoInFeed";
+
+function haptic(style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) {
+  if (Platform.OS === "web") return;
+  Haptics.impactAsync(style).catch(() => {});
+}
 
 type Props = { post: Post; isActive?: boolean };
 
@@ -46,6 +52,7 @@ export function PostCard({ post, isActive = false }: Props) {
   const { user } = useApp();
   const { toggleLike, toggleSave } = useData();
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [heartBurst, setHeartBurst] = useState(false);
 
   const author =
     post.authorId === "u_self"
@@ -73,15 +80,23 @@ export function PostCard({ post, isActive = false }: Props) {
       withSpring(1.0, { damping: 10, stiffness: 260 }),
     );
   };
-  // Tap on like button — toggle both ways + bounce
+  // Tap on like button
   const handleTapLike = () => {
+    haptic(Haptics.ImpactFeedbackStyle.Medium);
     toggleLike(post.id);
     bounceHeart();
   };
-  // Double-tap on image — only add like (never remove) + burst
+  // Double-tap on image — only add like (never remove) + full-screen burst
   const handleDoubleTapLike = () => {
-    if (!liked) toggleLike(post.id);
+    const wasLiked = liked;
+    if (!wasLiked) {
+      toggleLike(post.id);
+      haptic(Haptics.ImpactFeedbackStyle.Heavy);
+    } else {
+      haptic(Haptics.ImpactFeedbackStyle.Light);
+    }
     bounceHeart();
+    setHeartBurst(true);
   };
   const openComments = () => setCommentsOpen(true);
 
@@ -299,6 +314,12 @@ export function PostCard({ post, isActive = false }: Props) {
         post={post}
         visible={commentsOpen}
         onClose={() => setCommentsOpen(false)}
+      />
+
+      {/* Full-screen heart burst on double-tap */}
+      <HeartBurst
+        visible={heartBurst}
+        onDone={() => setHeartBurst(false)}
       />
     </View>
   );

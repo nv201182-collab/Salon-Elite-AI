@@ -13,6 +13,7 @@ import {
   Dimensions,
   FlatList,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +24,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { useBeeRefresh } from "@/components/BeeRefreshIndicator";
 import { CommentsSheet } from "@/components/CommentsSheet";
 import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
@@ -89,6 +91,9 @@ export default function ExploreScreen() {
 
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<Cat>("all");
+  const { refreshing, handleRefresh, beeIndicator } = useBeeRefresh(async () => {
+    await new Promise((r) => setTimeout(r, 1000));
+  });
   const [focused, setFocused] = useState(false);
   const [openPost, setOpenPost] = useState<Post | null>(null);
 
@@ -216,6 +221,15 @@ export default function ExploreScreen() {
         scrollEventThrottle={16}
         onScroll={handleScroll}
         contentContainerStyle={{ paddingBottom: bottomPad }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        }
         renderItem={({ item: row, index: rowIdx }) => {
           if (row[0] === "creators") {
             return (
@@ -284,6 +298,7 @@ export default function ExploreScreen() {
 
       {/* Post detail / comments */}
       <CommentsSheet post={openPost} visible={!!openPost} onClose={() => setOpenPost(null)} />
+      {beeIndicator}
     </FocusFadeView>
   );
 }

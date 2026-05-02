@@ -1,5 +1,15 @@
+/**
+ * FloatingTabBar — Apple Liquid Glass pill navigation, May 2026.
+ *
+ * Water-flow physics: the pill stretches toward the destination
+ * (like liquid), glides with overshoot, then settles.
+ *
+ * Color: transparent cool-gray (no beige), authentic glass.
+ * Haptics: light impact on every tab press.
+ */
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 import {
   GlassContainer,
   GlassView,
@@ -39,36 +49,31 @@ const TABS = [
 ];
 const TAB_COUNT = TABS.length;
 
-/* ─── Layout constants ─────────────────────────────────────── */
+/* ─── Layout ───────────────────────────────────────────────── */
 const SIDE_MARGIN = 20;
 const PILL_PAD    = 6;
 const PILL_INSET  = 5;
 const NORMAL_H    = 64;
 const COMPACT_H   = 48;
 
-/* ─── Spring configs — water-like, slow and graceful ──────── */
-/** Pill center glides with gentle overshoot */
-const POS_SPRING  = { damping: 22, stiffness: 160, mass: 1.1 };
-/** Stretch inflates languidly */
-const STRETCH_IN  = { damping: 7,  stiffness: 220, mass: 0.9 };
-/** Settle back softly, like a droplet landing */
-const STRETCH_OUT = { damping: 13, stiffness: 130, mass: 1.4 };
-/** Bar height collapse */
-const HEIGHT_SPRING = { damping: 26, stiffness: 240, mass: 0.9 };
+/* ─── Spring configs — viscous water physics ───────────────── */
+/** Main glide: slower, heavier — like water being pushed */
+const POS_SPRING    = { damping: 18, stiffness: 110, mass: 1.6 } as const;
+/** Stretch inflate: under-damped, snappy leading edge */
+const STRETCH_IN    = { damping: 5,  stiffness: 180, mass: 1.1 } as const;
+/** Settle: over-damped, slow drip back */
+const STRETCH_OUT   = { damping: 9,  stiffness: 75,  mass: 2.0 } as const;
+/** Bar height */
+const HEIGHT_SPRING = { damping: 26, stiffness: 240, mass: 0.9 } as const;
 
 const glassAvail = Platform.OS === "ios" && isGlassEffectAPIAvailable();
 
-function tabIndexFromSegments(segs: string[]): number {
-  const s = segs[1] as string | undefined;
-  if (s === "feed")    return 0;
-  if (s === "learn")   return 2;
-  if (s === "chat")    return 3;
-  if (s === "profile") return 4;
-  if (s === "index" || s === undefined) return 1;
-  return 0;
+function triggerHaptic() {
+  if (Platform.OS === "web") return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }
 
-/* ─── Per-tab icon animated wrapper ────────────────────────── */
+/* ─── Per-tab icon ──────────────────────────────────────────── */
 type TabIconProps = {
   icon: (typeof TABS)[number]["icon"];
   label: string;
@@ -79,27 +84,23 @@ type TabIconProps = {
 };
 
 function TabIcon({ icon, label, active, labelStyle, accentColor, mutedColor }: TabIconProps) {
-  const scale   = useSharedValue(active ? 1 : 0.88);
-  const opacity = useSharedValue(active ? 1 : 0.6);
+  const scale   = useSharedValue(active ? 1 : 0.86);
+  const opacity = useSharedValue(active ? 1 : 0.55);
 
   useEffect(() => {
-    scale.value   = withSpring(active ? 1 : 0.88, { damping: 16, stiffness: 260, mass: 0.7 });
-    opacity.value = withTiming(active ? 1 : 0.6, { duration: 220, easing: Easing.out(Easing.quad) });
+    scale.value   = withSpring(active ? 1 : 0.86, { damping: 14, stiffness: 300, mass: 0.6 });
+    opacity.value = withTiming(active ? 1 : 0.55, { duration: 200, easing: Easing.out(Easing.quad) });
   }, [active, scale, opacity]);
 
-  const iconWrapStyle = useAnimatedStyle(() => ({
+  const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
   }));
 
   return (
     <View style={styles.tabContent}>
-      <Animated.View style={iconWrapStyle}>
-        <Feather
-          name={icon}
-          size={22}
-          color={active ? accentColor : mutedColor}
-        />
+      <Animated.View style={iconStyle}>
+        <Feather name={icon} size={22} color={active ? accentColor : mutedColor} />
       </Animated.View>
       <Animated.Text
         numberOfLines={1}
@@ -139,15 +140,15 @@ export function FloatingTabBar() {
   /* ── Pill: center-X + width ─────────────────────────────── */
   const pillCX = useSharedValue(activeIdx * tabW + tabW / 2);
   const pillW  = useSharedValue(pillNatW);
-
   const prevIdxRef = useRef(activeIdx);
 
   const animatePill = useCallback((toIdx: number, fromIdx: number) => {
     const tw    = tabWRef.current;
     const natW  = tw - PILL_PAD * 2;
     const dist  = Math.abs(toIdx - fromIdx);
-    /* Stretch proportional to distance traveled — more graceful for long jumps */
-    const extra = Math.min(dist * tw * 0.35, tw * 0.8);
+
+    // Water stretch: proportional to distance, exaggerated for long jumps
+    const extra = Math.min(dist * tw * 0.62, tw * 1.25);
 
     pillCX.value = withSpring(toIdx * tw + tw / 2, POS_SPRING);
     pillW.value  = withSequence(
@@ -156,7 +157,6 @@ export function FloatingTabBar() {
     );
   }, [pillCX, pillW]);
 
-  /* Sync pill when routing changes outside of tap */
   useEffect(() => {
     if (prevIdxRef.current === activeIdx) return;
     animatePill(activeIdx, prevIdxRef.current);
@@ -173,8 +173,8 @@ export function FloatingTabBar() {
   }, [isScrolled, barH, labelOp]);
 
   /* ── Animated styles ────────────────────────────────────── */
-  const barStyle   = useAnimatedStyle(() => ({ height: barH.value }));
-  const pillStyle  = useAnimatedStyle(() => ({
+  const barStyle  = useAnimatedStyle(() => ({ height: barH.value }));
+  const pillStyle = useAnimatedStyle(() => ({
     left:  pillCX.value - pillW.value / 2,
     width: pillW.value,
   }));
@@ -183,6 +183,7 @@ export function FloatingTabBar() {
   /* ── Tab press ──────────────────────────────────────────── */
   const onTabPress = useCallback(
     (route: string, idx: number) => {
+      triggerHaptic();
       if (idx !== prevIdxRef.current) {
         animatePill(idx, prevIdxRef.current);
         prevIdxRef.current = idx;
@@ -198,8 +199,8 @@ export function FloatingTabBar() {
 
   return (
     <Animated.View style={[styles.wrapper, { bottom: bottomOffset }, barStyle]}>
-      {/* ── Glass / blur fill ─────────────────────────────── */}
-      <View style={styles.glassWrap}>
+      {/* ── Glass fill ────────────────────────────────────── */}
+      <View style={StyleSheet.absoluteFillObject}>
         {glassAvail ? (
           <GlassContainer style={StyleSheet.absoluteFillObject}>
             <GlassView
@@ -209,33 +210,35 @@ export function FloatingTabBar() {
             />
           </GlassContainer>
         ) : (
-          <BlurView intensity={90} tint="light" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={85} tint="light" style={StyleSheet.absoluteFillObject} />
         )}
+        {/* Cool-gray tint — no beige */}
         <View style={[StyleSheet.absoluteFillObject, styles.tint]} />
       </View>
 
       {/* ── Liquid pill ───────────────────────────────────── */}
       <Animated.View style={[styles.pill, pillStyle]} pointerEvents="none">
         <LinearGradient
-          colors={["rgba(212,172,108,0.48)", "rgba(185,145,80,0.28)"]}
+          colors={["rgba(200,160,100,0.44)", "rgba(168,112,64,0.24)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
-        {/* Specular sheen at top */}
+        {/* Specular sheen */}
         <View style={styles.pillSheen} />
-        {/* Bottom rim — adds glass depth */}
+        {/* Trailing liquid ripple — gives "water surface" feel */}
+        <View style={styles.pillRipple} />
         <View style={styles.pillRim} />
       </Animated.View>
 
-      {/* ── Tab buttons ──────────────────────────────────── */}
+      {/* ── Tabs ─────────────────────────────────────────── */}
       <View style={styles.row}>
         {TABS.map((tab, idx) => (
           <TouchableOpacity
             key={tab.name}
             style={styles.tabBtn}
             onPress={() => onTabPress(tab.route, idx)}
-            activeOpacity={0.75}
+            activeOpacity={0.80}
           >
             <TabIcon
               icon={tab.icon}
@@ -252,58 +255,61 @@ export function FloatingTabBar() {
   );
 }
 
+function tabIndexFromSegments(segs: string[]): number {
+  const s = segs[1] as string | undefined;
+  if (s === "feed")    return 0;
+  if (s === "learn")   return 2;
+  if (s === "chat")    return 3;
+  if (s === "profile") return 4;
+  if (s === "index" || s === undefined) return 1;
+  return 0;
+}
+
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
-    left: SIDE_MARGIN,
-    right: SIDE_MARGIN,
+    left: SIDE_MARGIN, right: SIDE_MARGIN,
     borderRadius: 999,
     zIndex: 100,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.82)",
-    shadowColor: "#000000",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.70)",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 28,
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
     elevation: 18,
   },
-  glassWrap: { ...StyleSheet.absoluteFillObject },
-  tint: { backgroundColor: "rgba(255,255,255,0.72)" },
+  /* Cool transparent gray — Apple Liquid Glass, no beige */
+  tint: { backgroundColor: "rgba(242,242,248,0.65)" },
+
   pill: {
     position: "absolute",
-    top: PILL_INSET,
-    bottom: PILL_INSET,
-    borderRadius: 999,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(200,160,90,0.50)",
+    top: PILL_INSET, bottom: PILL_INSET,
+    borderRadius: 999, overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(200,160,80,0.45)",
   },
   pillSheen: {
+    position: "absolute", top: 0, left: "10%", right: "10%",
+    height: "46%", borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.42)",
+  },
+  pillRipple: {
     position: "absolute",
-    top: 0,
-    left: "12%",
-    right: "12%",
-    height: "44%",
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.38)",
+    bottom: "15%", left: "20%", right: "20%",
+    height: "30%", borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   pillRim: {
-    position: "absolute",
-    bottom: 0,
-    left: "20%",
-    right: "20%",
-    height: 1,
-    borderRadius: 999,
-    backgroundColor: "rgba(200,160,90,0.30)",
+    position: "absolute", bottom: 0,
+    left: "22%", right: "22%",
+    height: 1, borderRadius: 999,
+    backgroundColor: "rgba(200,160,80,0.28)",
   },
-  row: { flex: 1, flexDirection: "row" },
-  tabBtn: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 6,
-  },
+
+  row:     { flex: 1, flexDirection: "row" },
+  tabBtn:  { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 6 },
   tabContent: { alignItems: "center", gap: 2 },
-  label: { fontSize: 9, letterSpacing: 0.1 },
+  label:   { fontSize: 9, letterSpacing: 0.1 },
 });

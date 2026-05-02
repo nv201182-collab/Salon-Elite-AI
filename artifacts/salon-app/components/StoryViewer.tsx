@@ -13,6 +13,7 @@
  *  • Owner controls (edit / delete) for own stories
  */
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
@@ -31,9 +32,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+function haptic(style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) {
+  if (Platform.OS === "web") return;
+  Haptics.impactAsync(style).catch(() => {});
+}
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "./Avatar";
+import { HeartBurst } from "./HeartBurst";
 
 const { height: SH, width: SW } = Dimensions.get("window");
 const FRAME_MS = 5_000;
@@ -86,7 +93,8 @@ export function StoryViewer({
   const [tick, setTick] = useState(0);
   const forceUpdate = () => setTick((n) => n + 1);
 
-  const [emojiPop, setEmojiPop] = useState<string | null>(null);
+  const [emojiPop, setEmojiPop]       = useState<string | null>(null);
+  const [heartBurst, setHeartBurst]   = useState(false);
   const emojiScale  = useRef(new Animated.Value(1)).current;
 
   /* reply input */
@@ -201,6 +209,13 @@ export function StoryViewer({
     Animated.spring(emojiScale, { toValue: 1, useNativeDriver: true, bounciness: 22 }).start(() => {
       setTimeout(() => setEmojiPop(null), 1200);
     });
+    // Haptic + full burst for heart reactions
+    if (emoji === "❤️" || emoji === "💕") {
+      haptic(Haptics.ImpactFeedbackStyle.Heavy);
+      setHeartBurst(true);
+    } else {
+      haptic(Haptics.ImpactFeedbackStyle.Medium);
+    }
   }
 
   /* ── Reply send ─────────────────────────────────────────── */
@@ -450,6 +465,13 @@ export function StoryViewer({
           />
         )}
       </Animated.View>
+
+      {/* Full-screen heart burst on ❤️ / 💕 reaction */}
+      <HeartBurst
+        visible={heartBurst}
+        originY={SW * 0.4}
+        onDone={() => setHeartBurst(false)}
+      />
     </Modal>
   );
 }

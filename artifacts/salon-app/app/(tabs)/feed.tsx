@@ -2,10 +2,12 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewToken } from "react-native";
+import * as Haptics from "expo-haptics";
+import { FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { useBeeRefresh } from "@/components/BeeRefreshIndicator";
 import { Chip } from "@/components/Chip";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { EmptyState } from "@/components/EmptyState";
@@ -110,6 +112,10 @@ export default function FeedScreen() {
   }, [employees, posts, user, myStories]);
 
   const { onScroll: tabOnScroll } = useTabBar();
+  const { refreshing: feedRefreshing, handleRefresh: handleFeedRefresh, beeIndicator } = useBeeRefresh(async () => {
+    // In a real app: refetch posts. Here: just wait for UX.
+    await new Promise((r) => setTimeout(r, 1000));
+  });
   const headerPad = insets.top + (Platform.OS === "web" ? 56 : 10);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
@@ -126,6 +132,15 @@ export default function FeedScreen() {
         contentContainerStyle={{ paddingBottom: bottomPad }}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
+        refreshControl={
+          <RefreshControl
+            refreshing={feedRefreshing}
+            onRefresh={handleFeedRefresh}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        }
         scrollEventThrottle={16}
         onScroll={handleScroll}
         ListHeaderComponent={
@@ -146,12 +161,12 @@ export default function FeedScreen() {
               <View style={{ flex: 1 }} />
 
               {/* DM button */}
-              <TouchableOpacity style={styles.iconBtn} onPress={() => router.push("/(tabs)/chat")}>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); router.push("/(tabs)/chat"); }}>
                 <Feather name="send" size={22} color={colors.foreground} />
               </TouchableOpacity>
 
               {/* Notifications bell with badge */}
-              <TouchableOpacity style={styles.iconBtn} onPress={() => setNotifOpen(true)}>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setNotifOpen(true); }}>
                 <Feather name="bell" size={22} color={colors.foreground} />
                 {notifCount > 0 && (
                   <View style={[styles.badge, { backgroundColor: "#FF3B6F" }]}>
@@ -333,6 +348,9 @@ export default function FeedScreen() {
       />
 
       {/* ── Notifications ────────────────────────────────── */}
+      {/* Bee pull-to-refresh indicator */}
+      {beeIndicator}
+
       <NotificationsSheet visible={notifOpen} onClose={() => setNotifOpen(false)} />
 
       {/* ── Story Viewer ─────────────────────────────────── */}
