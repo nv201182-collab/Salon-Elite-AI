@@ -7,6 +7,7 @@
  *  5. Likes summary "Нравится X людям"
  *  6. Caption + last comment inline
  */
+import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import React, { useState } from "react";
