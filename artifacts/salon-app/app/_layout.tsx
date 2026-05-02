@@ -30,32 +30,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useApp();
   const segments = useSegments();
   const router = useRouter();
-  const didInit = React.useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
-
-    const first  = segments[0] as string | undefined;
-    const second = segments[1] as string | undefined;
+    const first = segments[0] as string | undefined;
     const onLogin = first === "login";
-
     if (!user && !onLogin) {
       router.replace("/login");
-      return;
-    }
-
-    if (user && onLogin) {
+    } else if (user && onLogin) {
       router.replace("/(tabs)/feed");
-      return;
-    }
-
-    // При первом запуске с авторизованным пользователем —
-    // всегда открывать ленту, а не главную
-    if (user && !didInit.current) {
-      didInit.current = true;
-      if (second !== "feed") {
-        router.replace("/(tabs)/feed");
-      }
     }
   }, [user, isLoading, segments, router]);
 
