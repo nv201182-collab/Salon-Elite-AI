@@ -19,28 +19,15 @@ import { PressableScale } from "@/components/PressableScale";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-function formatPhone(input: string): string {
-  const digits = input.replace(/\D/g, "").slice(0, 11);
-  if (digits.length === 0) return "";
-  let out = "+7";
-  if (digits.length > 1) out += " (" + digits.slice(1, 4);
-  if (digits.length >= 4) out += ") " + digits.slice(4, 7);
-  if (digits.length >= 7) out += "-" + digits.slice(7, 9);
-  if (digits.length >= 9) out += "-" + digits.slice(9, 11);
-  return out;
-}
-
 export default function LoginScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login } = useApp();
-  const [phone, setPhone] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const digits = phone.replace(/\D/g, "");
-  const valid = digits.length === 11 && name.trim().length >= 2;
+  const valid = name.trim().length >= 2;
 
   const onSubmit = () => {
     if (!valid || loading) return;
@@ -49,7 +36,7 @@ export default function LoginScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     }
     setTimeout(() => {
-      login(phone, name);
+      login("", name);
       router.replace("/(tabs)");
     }, 600);
   };
@@ -92,21 +79,6 @@ export default function LoginScreen() {
           </View>
 
           <GlassCard borderRadius={28} innerStyle={styles.formInner} tintOpacity={0.30}>
-            <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-                Телефон
-              </Text>
-              <View style={[styles.inputWrap, { backgroundColor: "rgba(255,255,255,0.55)", borderColor: "rgba(200,160,100,0.25)" }]}>
-                <TextInput
-                  value={phone}
-                  onChangeText={(v) => setPhone(formatPhone(v))}
-                  placeholder="+7 (___) ___-__-__"
-                  placeholderTextColor={colors.mutedForeground}
-                  keyboardType="phone-pad"
-                  style={[styles.input, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}
-                />
-              </View>
-            </View>
             <View style={styles.field}>
               <Text style={[styles.label, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
                 Имя и фамилия

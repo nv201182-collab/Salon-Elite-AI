@@ -82,7 +82,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const u = await AsyncStorage.getItem(STORAGE_USER);
         const h = await AsyncStorage.getItem(STORAGE_HISTORY);
         if (cancelled) return;
-        if (u) setUser(JSON.parse(u));
+        if (u) {
+          setUser(JSON.parse(u));
+        } else {
+          const guestName = "Мастер";
+          setUser({
+            id: "u_self",
+            name: guestName,
+            phone: "",
+            role: "employee",
+            salonId: "salon_msk",
+            specialty: "Парикмахер-стилист",
+            points: 2350,
+            joinedAt: Date.now(),
+            initials: initialsFrom(guestName),
+          });
+          setPointsHistory([
+            { id: "h0", amount: 50, reason: "Добро пожаловать в APIA", at: Date.now() },
+          ]);
+        }
         if (h) setPointsHistory(JSON.parse(h));
       } catch {
         // ignore
