@@ -38,7 +38,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!user && !onLogin) {
       router.replace("/login");
     } else if (user && onLogin) {
-      router.replace("/");
+      router.replace("/(tabs)/feed");
     }
   }, [user, isLoading, segments, router]);
 
@@ -93,6 +93,10 @@ function RootLayoutNav() {
         <Stack.Screen
           name="ai"
           options={{ title: "AI-ассистент", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="story/new"
+          options={{ title: "Новая сториз", presentation: "modal", animation: "slide_from_bottom", headerShown: false }}
         />
         <Stack.Screen name="+not-found" options={{ title: "Не найдено" }} />
       </Stack>

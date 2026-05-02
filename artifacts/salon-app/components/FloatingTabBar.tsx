@@ -64,7 +64,8 @@ function tabIndexFromSegments(segs: string[]): number {
   if (s === "learn")   return 2;
   if (s === "chat")    return 3;
   if (s === "profile") return 4;
-  return 1;
+  if (s === "index" || s === undefined) return 1;
+  return 0;
 }
 
 /* ─── Per-tab icon animated wrapper ────────────────────────── */

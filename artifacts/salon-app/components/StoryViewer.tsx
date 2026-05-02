@@ -34,6 +34,7 @@ export type StoryItem = {
   initials: string;
   specialty: string;
   frames: string[];
+  storyText?: string | null;
 };
 
 type Props = {
@@ -298,6 +299,11 @@ export function StoryViewer({ stories, initialIndex, visible, onClose, onViewed 
             <Text style={styles.noImageInitials}>{story.initials}</Text>
             <Text style={styles.noImageName}>{story.name}</Text>
             <Text style={styles.noImageSpec}>{story.specialty}</Text>
+            {!!story.storyText && (
+              <View style={styles.storyTextCard}>
+                <Text style={styles.storyTextBody}>{story.storyText}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -348,6 +354,23 @@ const styles = StyleSheet.create({
   noImageInitials: { fontSize: 72, color: "rgba(255,255,255,0.88)", fontWeight: "700" },
   noImageName:     { fontSize: 22, color: "#fff", fontWeight: "600" },
   noImageSpec:     { fontSize: 14, color: "rgba(255,255,255,0.72)" },
+  storyTextCard: {
+    marginTop: 24,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    maxWidth: 300,
+    borderWidth: 1,
+    borderColor: "rgba(200,160,100,0.35)",
+  },
+  storyTextBody: {
+    color: "#FFF",
+    fontSize: 17,
+    lineHeight: 26,
+    textAlign: "center",
+    fontWeight: "400",
+  },
   tapZones: { ...StyleSheet.absoluteFillObject, flexDirection: "row", zIndex: 5 },
   tapLeft:  { flex: 1 },
   tapRight: { flex: 2 },

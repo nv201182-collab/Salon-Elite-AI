@@ -48,19 +48,25 @@ export type User = {
 
 export type PointsRecord = { id: string; amount: number; reason: string; at: number };
 
+export type MyStory = { text: string; createdAt: number };
+
 type Ctx = {
   user: User | null;
   isLoading: boolean;
   pointsHistory: PointsRecord[];
+  myStory: MyStory | null;
   login: (phone: string, name: string) => void;
   logout: () => Promise<void>;
   addPoints: (amount: number, reason?: string) => void;
   setRole: (role: UserRole) => void;
+  publishStory: (text: string) => void;
+  clearStory: () => void;
 };
 
 const AppContext = createContext<Ctx | null>(null);
 const STORAGE_USER = "@maison/user/v1";
 const STORAGE_HISTORY = "@maison/history/v1";
+const STORAGE_STORY = "@maison/story/v1";
 
 function initialsFrom(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -74,6 +80,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [pointsHistory, setPointsHistory] = useState<PointsRecord[]>([]);
+  const [myStory, setMyStory] = useState<MyStory | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +89,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const u = await AsyncStorage.getItem(STORAGE_USER);
         const h = await AsyncStorage.getItem(STORAGE_HISTORY);
         if (cancelled) return;
+        const st = await AsyncStorage.getItem(STORAGE_STORY);
+        if (st) setMyStory(JSON.parse(st));
         if (u) {
           setUser(JSON.parse(u));
         } else {
@@ -166,9 +175,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser((u) => (u ? { ...u, role } : u));
   }, []);
 
+  const publishStory = useCallback((text: string) => {
+    const story: MyStory = { text: text.trim(), createdAt: Date.now() };
+    setMyStory(story);
+    AsyncStorage.setItem(STORAGE_STORY, JSON.stringify(story)).catch(() => {});
+  }, []);
+
+  const clearStory = useCallback(() => {
+    setMyStory(null);
+    AsyncStorage.removeItem(STORAGE_STORY).catch(() => {});
+  }, []);
+
   const value = useMemo(
-    () => ({ user, isLoading, pointsHistory, login, logout, addPoints, setRole }),
-    [user, isLoading, pointsHistory, login, logout, addPoints, setRole]
+    () => ({ user, isLoading, pointsHistory, myStory, login, logout, addPoints, setRole, publishStory, clearStory }),
+    [user, isLoading, pointsHistory, myStory, login, logout, addPoints, setRole, publishStory, clearStory]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

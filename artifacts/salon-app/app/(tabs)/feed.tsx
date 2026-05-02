@@ -38,7 +38,7 @@ export default function FeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useApp();
+  const { user, myStory } = useApp();
   const { posts, trends, employees } = useData();
   const [filter, setFilter] = useState<Post["category"] | "all">("all");
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
@@ -84,18 +84,17 @@ export default function FeedScreen() {
       };
     });
 
-    // "Вы" story — use any saved posts
-    const youFrames: string[] = [];
     const youStory: StoryItem = {
       id: "you",
       name: "Вы",
       initials: user?.initials ?? "M",
       specialty: user?.specialty ?? "Мастер",
-      frames: youFrames,
+      frames: [],
+      storyText: myStory?.text ?? null,
     };
 
     return [youStory, ...empStories];
-  }, [employees, posts, user]);
+  }, [employees, posts, user, myStory]);
 
   const { onScroll: tabOnScroll } = useTabBar();
   const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
@@ -147,18 +146,32 @@ export default function FeedScreen() {
               contentContainerStyle={styles.storiesRow}
             >
               {stories.map((s, idx) => {
-                const isYou     = s.id === "you";
-                const isViewed  = !isYou && viewedStories.has(s.id);
+                const isYou    = s.id === "you";
+                const hasMyStory = isYou && !!myStory;
+                const isViewed = !isYou && viewedStories.has(s.id);
+
+                // Кольцо: золотое если есть сториз, серое если нет
                 const ringColors: [string, string] = isYou
-                  ? [colors.pink, colors.purple]
+                  ? hasMyStory
+                    ? ["#C8A064", "#8B5E3C"]
+                    : ["rgba(180,180,180,0.4)", "rgba(140,140,140,0.3)"]
                   : isViewed
                     ? ["rgba(180,180,180,0.5)", "rgba(140,140,140,0.4)"]
                     : ["#C8A064", "#8B5E3C"];
+
                 return (
                 <PressableScale
                   key={s.id}
                   onPress={() => {
-                    if (isYou) { router.push("/post/new"); return; }
+                    if (isYou) {
+                      // Если нет сториз — создать, если есть — посмотреть
+                      if (!hasMyStory) {
+                        router.push("/story/new");
+                      } else {
+                        setStoryViewerIdx(0);
+                      }
+                      return;
+                    }
                     setStoryViewerIdx(idx);
                   }}
                   scaleTo={0.95}
@@ -172,21 +185,18 @@ export default function FeedScreen() {
                     >
                       <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
                         <Avatar initials={s.initials} size={56} />
-                        {s.id === "you" ? (
+                        {isYou && !hasMyStory ? (
                           <View
                             style={[
                               styles.plusPill,
-                              { backgroundColor: colors.pink, borderColor: "rgba(248,243,236,0.95)" },
+                              { backgroundColor: "#C8A064", borderColor: "rgba(248,243,236,0.95)" },
                             ]}
                           >
                             <Feather name="plus" size={12} color="#FFFFFF" />
                           </View>
-                        ) : (
-                          // Dot indicator showing has content
-                          s.frames.length > 0 ? (
-                            <View style={[styles.dotPill, { backgroundColor: "#C8A064" }]} />
-                          ) : null
-                        )}
+                        ) : !isYou && s.frames.length > 0 ? (
+                          <View style={[styles.dotPill, { backgroundColor: "#C8A064" }]} />
+                        ) : null}
                       </View>
                     </LinearGradient>
                     <Text
