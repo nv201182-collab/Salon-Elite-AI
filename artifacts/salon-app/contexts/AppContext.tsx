@@ -48,7 +48,7 @@ export type User = {
 
 export type PointsRecord = { id: string; amount: number; reason: string; at: number };
 
-export type MyStory = { text: string; createdAt: number };
+export type MyStory = { text: string; mediaUri?: string; createdAt: number };
 
 type Ctx = {
   user: User | null;
@@ -59,7 +59,7 @@ type Ctx = {
   logout: () => Promise<void>;
   addPoints: (amount: number, reason?: string) => void;
   setRole: (role: UserRole) => void;
-  publishStory: (text: string) => void;
+  publishStory: (text: string, mediaUri?: string) => void;
   clearStory: () => void;
 };
 
@@ -175,8 +175,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser((u) => (u ? { ...u, role } : u));
   }, []);
 
-  const publishStory = useCallback((text: string) => {
-    const story: MyStory = { text: text.trim(), createdAt: Date.now() };
+  const publishStory = useCallback((text: string, mediaUri?: string) => {
+    const story: MyStory = { text: text.trim(), mediaUri: mediaUri && mediaUri !== "text_only" ? mediaUri : undefined, createdAt: Date.now() };
     setMyStory(story);
     AsyncStorage.setItem(STORAGE_STORY, JSON.stringify(story)).catch(() => {});
   }, []);

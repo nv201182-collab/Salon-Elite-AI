@@ -89,8 +89,8 @@ export default function FeedScreen() {
       name: "Вы",
       initials: user?.initials ?? "M",
       specialty: user?.specialty ?? "Мастер",
-      frames: [],
-      storyText: myStory?.text ?? null,
+      frames: myStory?.mediaUri ? [myStory.mediaUri] : [],
+      storyText: myStory?.text || null,
     };
 
     return [youStory, ...empStories];
