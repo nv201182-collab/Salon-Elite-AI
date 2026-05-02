@@ -150,7 +150,7 @@ export function PostCard({ post, isActive = false }: Props) {
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: "rgba(255,255,255,0.72)" }]}>
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
 
       {/* ── Author header ──────────────────────────────────── */}
       <View style={styles.authorRow}>

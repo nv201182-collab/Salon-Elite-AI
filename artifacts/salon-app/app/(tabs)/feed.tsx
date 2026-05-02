@@ -240,10 +240,10 @@ export default function FeedScreen() {
                         end={{ x: 1, y: 1 }}
                         style={[styles.storyRing, isViewed && styles.storyRingViewed]}
                       >
-                        <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
+                        <View style={[styles.storyInner, { backgroundColor: "rgba(255,255,255,0.98)" }]}>
                           <Avatar initials={s.initials} size={52} />
                           {isYou && !hasStories ? (
-                            <View style={[styles.plusPill, { backgroundColor: "#C8A064", borderColor: "rgba(248,243,236,0.95)" }]}>
+                            <View style={[styles.plusPill, { backgroundColor: "#C8A064", borderColor: "rgba(255,255,255,0.98)" }]}>
                               <Feather name="plus" size={11} color="#FFFFFF" />
                             </View>
                           ) : !isYou && s.frames.length > 0 ? (
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   dotPill: {
     position: "absolute", bottom: 2, right: 2,
     width: 9, height: 9, borderRadius: 5,
-    borderWidth: 1.5, borderColor: "rgba(248,243,236,0.95)",
+    borderWidth: 1.5, borderColor: "rgba(255,255,255,0.98)",
   },
   trendsWrap: { paddingTop: 12, paddingBottom: 4 },
   trendsHead: {

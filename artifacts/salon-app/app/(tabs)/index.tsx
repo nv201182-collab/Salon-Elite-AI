@@ -152,8 +152,8 @@ export default function ExploreScreen() {
       <LiquidBg />
 
       {/* ── Search bar ──────────────────────────────────── */}
-      <View style={[styles.searchWrap, { paddingTop: headerPad, backgroundColor: "rgba(248,243,236,0.90)" }]}>
-        <View style={[styles.searchBar, { backgroundColor: "rgba(255,255,255,0.72)", borderColor: "rgba(200,160,100,0.35)" }]}>
+      <View style={[styles.searchWrap, { paddingTop: headerPad, backgroundColor: "rgba(255,255,255,0.95)" }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
@@ -174,7 +174,7 @@ export default function ExploreScreen() {
       </View>
 
       {/* ── Category chips ──────────────────────────────── */}
-      <View style={[styles.chipsBg, { backgroundColor: "rgba(248,243,236,0.90)" }]}>
+      <View style={[styles.chipsBg, { backgroundColor: "rgba(255,255,255,0.95)" }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -235,7 +235,7 @@ export default function ExploreScreen() {
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                       >
-                        <View style={[styles.creatorInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
+                        <View style={[styles.creatorInner, { backgroundColor: "rgba(255,255,255,0.98)" }]}>
                           <Avatar initials={e.initials} size={44} />
                         </View>
                       </LinearGradient>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   popularText: { color: "#fff", fontSize: 10 },
   creatorsSection: {
     paddingVertical: 16,
-    backgroundColor: "rgba(248,243,236,0.70)",
+    backgroundColor: "rgba(255,255,255,0.80)",
   },
   creatorsHead: {
     flexDirection: "row", alignItems: "center", gap: 6,
