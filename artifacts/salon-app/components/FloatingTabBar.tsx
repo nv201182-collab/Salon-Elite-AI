@@ -216,13 +216,15 @@ export function FloatingTabBar() {
       {/* ── Liquid pill ───────────────────────────────────── */}
       <Animated.View style={[styles.pill, pillStyle]} pointerEvents="none">
         <LinearGradient
-          colors={["rgba(200,160,100,0.32)", "rgba(185,145,85,0.18)"]}
+          colors={["rgba(212,172,108,0.48)", "rgba(185,145,80,0.28)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
         {/* Specular sheen at top */}
         <View style={styles.pillSheen} />
+        {/* Bottom rim — adds glass depth */}
+        <View style={styles.pillRim} />
       </Animated.View>
 
       {/* ── Tab buttons ──────────────────────────────────── */}
@@ -258,12 +260,12 @@ const styles = StyleSheet.create({
     zIndex: 100,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.78)",
-    shadowColor: "#5A4020",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.20,
-    shadowRadius: 24,
-    elevation: 16,
+    borderColor: "rgba(255,255,255,0.82)",
+    shadowColor: "#3A2810",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.24,
+    shadowRadius: 32,
+    elevation: 18,
   },
   glassWrap: { ...StyleSheet.absoluteFillObject },
   tint: { backgroundColor: "rgba(252,247,241,0.50)" },
@@ -274,16 +276,25 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(185,145,85,0.42)",
+    borderColor: "rgba(200,160,90,0.50)",
   },
   pillSheen: {
     position: "absolute",
     top: 0,
-    left: "10%",
-    right: "10%",
-    height: "45%",
+    left: "12%",
+    right: "12%",
+    height: "44%",
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(255,255,255,0.38)",
+  },
+  pillRim: {
+    position: "absolute",
+    bottom: 0,
+    left: "20%",
+    right: "20%",
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: "rgba(200,160,90,0.30)",
   },
   row: { flex: 1, flexDirection: "row" },
   tabBtn: {

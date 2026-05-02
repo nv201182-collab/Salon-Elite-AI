@@ -69,6 +69,8 @@ export function GlassCard({
             { backgroundColor: `rgba(255,255,255,${tintOpacity})` },
           ]}
         />
+        {/* Specular edge — simulates physical glass top-edge reflection */}
+        <View style={styles.specular} />
         <View style={[styles.content, innerStyle]}>{children}</View>
       </View>
     </View>
@@ -87,15 +89,24 @@ export function GlassCard({
 const styles = StyleSheet.create({
   shadow: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.70)",
-    shadowColor: "#8B7355",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 20,
-    elevation: 3,
+    borderColor: "rgba(255,255,255,0.80)",
+    shadowColor: "#6B5030",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 28,
+    elevation: 4,
   },
   inner: {
     overflow: "hidden",
+  },
+  specular: {
+    position: "absolute",
+    top: 0,
+    left: "18%",
+    right: "18%",
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.90)",
   },
   content: {
     padding: 18,

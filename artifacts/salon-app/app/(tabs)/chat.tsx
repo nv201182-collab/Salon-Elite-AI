@@ -62,7 +62,7 @@ export default function ChatTab() {
           <View>
             <View style={[styles.header, { paddingTop: headerPad }]}>
               <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Чаты</Text>
-              <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Команда APIA</Text>
+              <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Команда APIA</Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
               {FILTERS.map((f) => (
@@ -86,10 +86,10 @@ export default function ChatTab() {
 
 const styles = StyleSheet.create({
   list: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 14, gap: 6 },
-  eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
-  title: { fontSize: 30, letterSpacing: -0.6 },
+  header: { paddingHorizontal: 20, paddingBottom: 16, gap: 6 },
+  eyebrow: { fontSize: 10, letterSpacing: 2.5, marginBottom: 6, textTransform: "uppercase" as const },
+  title: { fontSize: 30, letterSpacing: -0.8 },
   chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 4, paddingBottom: 12 },
-  sectionHeader: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 },
-  sectionText: { fontSize: 12, letterSpacing: 0.1 },
+  sectionHeader: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
+  sectionText: { fontSize: 9, letterSpacing: 2, textTransform: "uppercase" as const, opacity: 0.50 },
 });

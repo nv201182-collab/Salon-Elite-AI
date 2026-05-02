@@ -124,7 +124,7 @@ export default function FeedScreen() {
                 <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
                   Лента
                 </Text>
-                <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+                <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
                   Работы команды
                 </Text>
               </View>
@@ -287,8 +287,8 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     gap: 12,
   },
-  eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
-  title: { fontSize: 30, letterSpacing: -0.6 },
+  eyebrow: { fontSize: 10, letterSpacing: 2.5, marginBottom: 6, textTransform: "uppercase" as const },
+  title: { fontSize: 30, letterSpacing: -0.8 },
   addBtn: {
     width: 48, height: 48, borderRadius: 24,
     alignItems: "center", justifyContent: "center",

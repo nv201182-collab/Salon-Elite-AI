@@ -23,16 +23,16 @@ export function StatCard({ label, value, hint, accent }: Props) {
         end={{ x: 1, y: 1 }}
         style={styles.accentCard}
       >
-        <Text style={[styles.value, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>{value}</Text>
-        <Text style={[styles.label, { color: "#FFFFFF", fontFamily: "Inter_500Medium", opacity: 0.85 }]}>{label}</Text>
-        {hint ? <Text style={[styles.hint, { color: "#FFFFFF", fontFamily: "Inter_400Regular", opacity: 0.75 }]}>{hint}</Text> : null}
+        <Text style={[styles.value, { color: "#FFFFFF", fontFamily: "Inter_700Bold" }]}>{value}</Text>
+        <Text style={[styles.label, { color: "#FFFFFF", fontFamily: "Inter_500Medium", opacity: 0.80 }]}>{label}</Text>
+        {hint ? <Text style={[styles.hint, { color: "#FFFFFF", fontFamily: "Inter_400Regular", opacity: 0.70 }]}>{hint}</Text> : null}
       </LinearGradient>
     );
   }
 
   return (
     <GlassCard style={{ flex: 1 }} innerStyle={styles.inner} borderRadius={22}>
-      <Text style={[styles.value, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{value}</Text>
+      <Text style={[styles.value, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>{value}</Text>
       <Text style={[styles.label, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>{label}</Text>
       {hint ? <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>{hint}</Text> : null}
     </GlassCard>
@@ -43,20 +43,25 @@ const styles = StyleSheet.create({
   accentCard: {
     flex: 1,
     borderRadius: 22,
-    paddingVertical: 18,
+    paddingVertical: 20,
     paddingHorizontal: 18,
-    gap: 4,
-    minHeight: 96,
+    gap: 6,
+    minHeight: 100,
     justifyContent: "center",
+    shadowColor: "#8B6030",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
+    elevation: 6,
   },
   inner: {
-    paddingVertical: 18,
+    paddingVertical: 20,
     paddingHorizontal: 18,
-    gap: 4,
-    minHeight: 96,
+    gap: 6,
+    minHeight: 100,
     justifyContent: "center",
   },
-  label: { fontSize: 12, letterSpacing: 0.1 },
-  value: { fontSize: 28, letterSpacing: -0.6 },
-  hint: { fontSize: 11, letterSpacing: 0.1, marginTop: 2 },
+  label: { fontSize: 10, letterSpacing: 2, textTransform: "uppercase" as const },
+  value: { fontSize: 30, letterSpacing: -0.8 },
+  hint: { fontSize: 11, letterSpacing: 0.2, marginTop: 2, opacity: 0.70 },
 });

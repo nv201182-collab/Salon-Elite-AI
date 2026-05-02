@@ -57,7 +57,7 @@ export default function LearnScreen() {
       >
         <View style={[styles.header, { paddingTop: headerPad }]}>
           <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Обучение</Text>
-          <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Программа APIA</Text>
+          <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Программа APIA</Text>
           <Text style={[styles.summary, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             {completedCount} из {courses.length} курсов завершено. Каждый урок начисляет баллы и открывает следующий.
           </Text>
@@ -81,9 +81,9 @@ export default function LearnScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 14, gap: 6 },
-  eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
-  title: { fontSize: 30, letterSpacing: -0.6 },
-  summary: { fontSize: 13, lineHeight: 19, letterSpacing: 0.1, marginTop: 8 },
+  header: { paddingHorizontal: 20, paddingBottom: 16, gap: 6 },
+  eyebrow: { fontSize: 10, letterSpacing: 2.5, marginBottom: 6, textTransform: "uppercase" as const },
+  title: { fontSize: 30, letterSpacing: -0.8 },
+  summary: { fontSize: 13, lineHeight: 20, letterSpacing: 0.1, marginTop: 8, opacity: 0.72 },
   chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 8, paddingBottom: 16 },
 });

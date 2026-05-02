@@ -36,8 +36,8 @@ export function SectionHeader({ eyebrow, title, action }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "flex-end", paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 },
-  eyebrow: { fontSize: 12, letterSpacing: 0.2, marginBottom: 4 },
-  title: { fontSize: 22, letterSpacing: -0.3 },
-  action: { fontSize: 13, letterSpacing: 0.1 },
+  row: { flexDirection: "row", alignItems: "flex-end", paddingHorizontal: 20, paddingTop: 32, paddingBottom: 16 },
+  eyebrow: { fontSize: 10, letterSpacing: 2.5, marginBottom: 8, textTransform: "uppercase" as const },
+  title: { fontSize: 26, letterSpacing: -0.7, lineHeight: 32 },
+  action: { fontSize: 13, letterSpacing: 0.3, paddingBottom: 3 },
 });

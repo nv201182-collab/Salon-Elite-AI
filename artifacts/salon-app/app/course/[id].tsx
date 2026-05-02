@@ -1,9 +1,10 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { PressableScale } from "@/components/PressableScale";
 import { useData } from "@/contexts/DataContext";
@@ -97,17 +98,33 @@ export default function CourseDetail() {
         <Meta label="БАЛЛОВ" value={`+${course.reward}`} accent />
       </View>
 
-      <View style={[styles.progressBlock, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.progressBlock, { borderColor: colors.border, overflow: "hidden" }]}>
+        {Platform.OS !== "web" && (
+          <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFillObject} />
+        )}
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(255,255,255,0.55)" }]} />
         <View style={styles.progressHeader}>
           <Text style={[styles.progressLabel, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
             ПРОГРЕСС
           </Text>
-          <Text style={[styles.progressValue, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+          <Text style={[styles.progressValue, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
             {Math.round(ratio * 100)}%
           </Text>
         </View>
         <View style={[styles.track, { backgroundColor: colors.muted }]}>
-          <View style={[styles.fill, { width: `${Math.max(2, ratio * 100)}%`, backgroundColor: colors.gold }]} />
+          <LinearGradient
+            colors={[colors.pink, colors.purple]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.fill, {
+              width: `${Math.max(2, ratio * 100)}%`,
+              shadowColor: colors.gold,
+              shadowOffset: { width: 4, height: 0 },
+              shadowOpacity: 0.55,
+              shadowRadius: 10,
+              elevation: 3,
+            }]}
+          />
         </View>
         {isComplete ? (
           <Text style={[styles.completeText, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
@@ -203,8 +220,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   levelText: { fontSize: 9, letterSpacing: 2 },
-  heroTitle: { fontSize: 28, letterSpacing: -0.6, lineHeight: 32 },
-  heroDesc: { fontSize: 13, lineHeight: 19, letterSpacing: 0.1 },
+  heroTitle: { fontSize: 30, letterSpacing: -0.8, lineHeight: 34 },
+  heroDesc: { fontSize: 13, lineHeight: 20, letterSpacing: 0.1, opacity: 0.80 },
   metaRow: {
     flexDirection: "row",
     paddingVertical: 18,
@@ -216,9 +233,16 @@ const styles = StyleSheet.create({
   progressBlock: {
     marginHorizontal: 20,
     marginTop: 18,
-    padding: 18,
-    borderWidth: StyleSheet.hairlineWidth,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
+    borderRadius: 20,
     gap: 12,
+    shadowColor: "#6B4A20",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 3,
   },
   progressHeader: { flexDirection: "row", justifyContent: "space-between" },
   progressLabel: { fontSize: 9, letterSpacing: 2 },
@@ -243,6 +267,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   lessonNumText: { fontSize: 11, letterSpacing: 0.5 },
-  lessonTitle: { fontSize: 14, letterSpacing: 0.1 },
-  lessonMeta: { fontSize: 11, letterSpacing: 0.2, marginTop: 4 },
+  lessonTitle: { fontSize: 14, letterSpacing: -0.1 },
+  lessonMeta: { fontSize: 11, letterSpacing: 0.3, marginTop: 5, opacity: 0.60 },
 });

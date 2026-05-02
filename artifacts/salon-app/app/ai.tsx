@@ -82,7 +82,7 @@ export default function AIScreen() {
           <Feather name="zap" size={18} color="#FFFFFF" />
         </LinearGradient>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+          <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
             AI-ассистент
           </Text>
           <Text style={[styles.headerSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
@@ -130,7 +130,7 @@ export default function AIScreen() {
         >
           {SUGGESTED_PROMPTS.map((p) => (
             <PressableScale key={p} onPress={() => send(p)} scaleTo={0.95}>
-              <View style={[styles.suggest, { backgroundColor: colors.card }]}>
+              <View style={[styles.suggest, { backgroundColor: "rgba(255,255,255,0.68)" }]}>
                 <Text style={[styles.suggestText, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
                   {p}
                 </Text>
@@ -188,12 +188,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 12,
-    gap: 12,
+    paddingBottom: 14,
+    gap: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(200,160,100,0.18)",
   },
-  orb: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 20, letterSpacing: -0.3 },
-  headerSub: { fontSize: 13, letterSpacing: 0.1, marginTop: 2 },
+  orb: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#8B6030",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.30,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  headerTitle: { fontSize: 20, letterSpacing: -0.5 },
+  headerSub: { fontSize: 12, letterSpacing: 0.2, marginTop: 2, opacity: 0.65 },
   thinkingRow: { paddingHorizontal: 16, paddingVertical: 4 },
   thinkingDot: {
     flexDirection: "row",
@@ -204,12 +217,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 18,
     borderTopLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
   },
-  thinkingText: { fontSize: 12, letterSpacing: 0.1 },
+  thinkingText: { fontSize: 12, letterSpacing: 0.2 },
   suggest: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
+    shadowColor: "#7A6030",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   suggestText: { fontSize: 13, letterSpacing: 0.1 },
   composer: {
@@ -218,6 +240,8 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 14,
     paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(200,160,100,0.18)",
   },
   composerInput: {
     flex: 1,
@@ -229,6 +253,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
   },
   sendBtn: {
     width: 48,

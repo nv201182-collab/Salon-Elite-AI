@@ -81,8 +81,9 @@ export function MessageBubble({ text, fromMe, authorName, time, pinned }: Props)
         <View
           style={[
             styles.bubble,
+            styles.incomingBubble,
             {
-              backgroundColor: colors.card,
+              backgroundColor: "rgba(255,255,255,0.72)",
               borderTopLeftRadius: 4,
               borderTopRightRadius: 18,
             },
@@ -100,13 +101,22 @@ const styles = StyleSheet.create({
   bubble: {
     maxWidth: "82%",
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
     gap: 4,
   },
-  author: { fontSize: 11, letterSpacing: 0.1 },
-  text: { fontSize: 14, lineHeight: 20 },
+  incomingBubble: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.80)",
+    shadowColor: "#7A6030",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  author: { fontSize: 10, letterSpacing: 0.5, textTransform: "uppercase" as const, opacity: 0.70 },
+  text: { fontSize: 14, lineHeight: 21, letterSpacing: 0.1 },
   metaRow: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
-  meta: { fontSize: 10, letterSpacing: 0.1 },
+  meta: { fontSize: 10, letterSpacing: 0.1, opacity: 0.65 },
 });

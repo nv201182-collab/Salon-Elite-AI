@@ -24,7 +24,8 @@ export function ContestCard({ contest }: Props) {
       <View style={styles.card}>
         <Image source={contest.cover} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient
-          colors={["rgba(15,15,16,0.1)", "rgba(15,15,16,0.95)"]}
+          colors={["rgba(10,8,5,0.05)", "rgba(10,8,5,0.55)", "rgba(10,8,5,0.96)"]}
+          locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.content}>
@@ -72,11 +73,18 @@ export function ContestCard({ contest }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    height: 240,
-    borderRadius: 22,
+    height: 256,
+    borderRadius: 24,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    shadowColor: "#1A0E00",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 24,
+    elevation: 6,
   },
-  content: { flex: 1, justifyContent: "space-between", padding: 18 },
+  content: { flex: 1, justifyContent: "space-between", padding: 20 },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   badge: {
     paddingHorizontal: 14,
@@ -93,8 +101,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   days: { fontSize: 11, letterSpacing: 0.2 },
-  title: { fontSize: 22, letterSpacing: -0.4, lineHeight: 26 },
-  prize: { fontSize: 13, lineHeight: 18, letterSpacing: 0.1 },
+  title: { fontSize: 24, letterSpacing: -0.6, lineHeight: 28 },
+  prize: { fontSize: 13, lineHeight: 18, letterSpacing: 0.2, opacity: 0.85 },
   footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   participants: { fontSize: 12, letterSpacing: 0.1 },
   cta: { fontSize: 13, letterSpacing: 0.1 },

@@ -96,7 +96,7 @@ export function CommentsSheet({ post, visible, onClose }: Props) {
         style={[
           styles.sheet,
           {
-            backgroundColor: colors.card,
+            backgroundColor: colors.background,
             transform: [{ translateY: slideAnim }],
             paddingBottom: insets.bottom + 8,
           },
@@ -109,7 +109,7 @@ export function CommentsSheet({ post, visible, onClose }: Props) {
 
         {/* Title */}
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+          <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
             Комментарии
           </Text>
           <Pressable onPress={onClose} hitSlop={12}>
@@ -195,24 +195,28 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: SHEET_H,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    shadowColor: "#1A0E00",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.20,
+    shadowRadius: 28,
     elevation: 24,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: "rgba(255,255,255,0.60)",
   },
-  handleWrap: { alignItems: "center", paddingTop: 10, paddingBottom: 2 },
-  handle: { width: 36, height: 4, borderRadius: 2 },
+  handleWrap: { alignItems: "center", paddingTop: 12, paddingBottom: 4 },
+  handle: { width: 44, height: 5, borderRadius: 3 },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
-  title: { fontSize: 17 },
+  title: { fontSize: 18, letterSpacing: -0.3 },
   listContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12, gap: 14 },
   empty: { alignItems: "center", paddingVertical: 40, gap: 10 },
   emptyText: { fontSize: 14 },

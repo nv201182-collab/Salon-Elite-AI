@@ -78,7 +78,7 @@ export default function ProfileScreen() {
           <View style={styles.avatarRing}>
             <Avatar initials={user.initials} size={88} variant="gold" />
           </View>
-          <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{user.name}</Text>
+          <Text style={[styles.name, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>{user.name}</Text>
           <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             {user.specialty} · {salonName}
           </Text>
@@ -108,7 +108,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+          <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
             Режим доступа
           </Text>
           <View style={styles.chipsRow}>
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Достижения</Text>
+          <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>Достижения</Text>
           <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             {achievements.filter((a) => user.points >= a.threshold).length} из {achievements.length} открыто.
           </Text>
@@ -164,7 +164,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Последние баллы</Text>
+          <Text style={[styles.sectionLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>Последние баллы</Text>
           {pointsHistory.length === 0 ? (
             <Text style={[styles.hint, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
               Пока пусто. Завершите урок или опубликуйте работу — баллы появятся здесь.
@@ -215,24 +215,29 @@ function MenuItem({ icon, label, sub, onPress, destructive }: {
 }
 
 const styles = StyleSheet.create({
-  header: { alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, gap: 10 },
+  header: { alignItems: "center", paddingHorizontal: 20, paddingBottom: 18, gap: 10 },
   avatarRing: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "rgba(200,160,100,0.40)",
-    backgroundColor: "rgba(255,255,255,0.30)",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,160,100,0.50)",
+    backgroundColor: "rgba(255,255,255,0.35)",
+    shadowColor: "#8B6030",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  name: { fontSize: 24, letterSpacing: -0.4, marginTop: 4 },
-  specialty: { fontSize: 13, letterSpacing: 0.1, textAlign: "center" },
-  roleBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, marginTop: 4 },
-  roleText: { fontSize: 11, letterSpacing: 0.2 },
+  name: { fontSize: 28, letterSpacing: -0.7, marginTop: 4 },
+  specialty: { fontSize: 13, letterSpacing: 0.2, textAlign: "center", opacity: 0.72 },
+  roleBadge: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, marginTop: 4 },
+  roleText: { fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" as const },
   statsRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, marginTop: 10 },
-  section: { paddingHorizontal: 20, marginTop: 28, gap: 12 },
-  sectionLabel: { fontSize: 16, letterSpacing: -0.1 },
+  section: { paddingHorizontal: 20, marginTop: 32, gap: 12 },
+  sectionLabel: { fontSize: 10, letterSpacing: 2.5, textTransform: "uppercase" as const, opacity: 0.55 },
   chipsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   hint: { fontSize: 12, lineHeight: 17, letterSpacing: 0.1 },
   menu: { marginTop: 24, marginHorizontal: 20, gap: 10 },

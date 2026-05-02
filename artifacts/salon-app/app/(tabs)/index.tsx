@@ -82,7 +82,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={[styles.topBar, { paddingTop: headerPad }]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.greeting, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            <Text style={[styles.greeting, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
               {greeting},{"\n"}{user?.name?.split(" ")[0] ?? ""}!
             </Text>
             <Text style={[styles.sub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
@@ -288,22 +288,22 @@ function ActionTile({
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, gap: 12 },
-  greeting: { fontSize: 26, letterSpacing: -0.6, lineHeight: 32 },
-  sub: { fontSize: 13, marginTop: 6, letterSpacing: 0.1 },
+  topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 18, gap: 12 },
+  greeting: { fontSize: 32, letterSpacing: -0.9, lineHeight: 38 },
+  sub: { fontSize: 13, marginTop: 8, letterSpacing: 0.2, opacity: 0.72 },
   storiesRow: { gap: 14, paddingHorizontal: 20, paddingVertical: 14 },
   storyItem: { alignItems: "center", gap: 6, width: 70 },
   storyRing: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", padding: 2.5 },
   storyInner: { flex: 1, alignSelf: "stretch", borderRadius: 30, alignItems: "center", justifyContent: "center" },
   storyName: { fontSize: 11, letterSpacing: 0.1 },
   actionRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, paddingTop: 16 },
-  tile: { paddingVertical: 18, paddingHorizontal: 14, borderRadius: 20, gap: 8, minHeight: 108 },
-  tileLabel: { fontSize: 13, letterSpacing: 0.1 },
-  tileSub: { fontSize: 11, letterSpacing: 0.1 },
+  tile: { paddingVertical: 20, paddingHorizontal: 14, borderRadius: 20, gap: 10, minHeight: 116 },
+  tileLabel: { fontSize: 13, letterSpacing: -0.1 },
+  tileSub: { fontSize: 11, letterSpacing: 0.2 },
   todayInner: { flexDirection: "row", alignItems: "center", padding: 18, gap: 12 },
   contestCard: { flexDirection: "row", alignItems: "center", padding: 18, borderRadius: 22, gap: 12 },
   eyebrow: { fontSize: 12, letterSpacing: 0.1 },
-  cardTitle: { fontSize: 17, letterSpacing: -0.2 },
+  cardTitle: { fontSize: 17, letterSpacing: -0.4 },
   cardSub: { fontSize: 12, letterSpacing: 0.1 },
   arrowCircle: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   rankInner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12 },

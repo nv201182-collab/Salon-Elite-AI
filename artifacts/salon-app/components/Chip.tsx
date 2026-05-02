@@ -18,8 +18,15 @@ export function Chip({ label, active, onPress, variant = "default" }: Props) {
   if (active) {
     return (
       <PressableScale onPress={onPress} scaleTo={0.94} haptic={!!onPress}>
-        <View style={[styles.chip, { backgroundColor: colors.accent }]}>
-          <Text style={[styles.text, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>
+        <View style={[styles.chip, {
+          backgroundColor: colors.accent,
+          shadowColor: colors.gold,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.40,
+          shadowRadius: 10,
+          elevation: 5,
+        }]}>
+          <Text style={[styles.text, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 }]}>
             {label}
           </Text>
         </View>
@@ -51,19 +58,19 @@ const styles = StyleSheet.create({
   },
   glassChip: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.68)",
-    shadowColor: "#8B7355",
+    borderColor: "rgba(255,255,255,0.75)",
+    shadowColor: "#7A6030",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
     elevation: 2,
   },
   chipOverlay: {
-    backgroundColor: "rgba(255,255,255,0.40)",
+    backgroundColor: "rgba(255,255,255,0.48)",
   },
   text: {
     fontSize: 13,
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
     position: "relative",
   },
 });

@@ -22,7 +22,16 @@ export function Avatar({ initials, size = 40, variant = "default" }: Props) {
         end={{ x: 1, y: 1 }}
         style={[
           styles.base,
-          { width: size, height: size, borderRadius: size / 2 },
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            shadowColor: colors.gold,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.50,
+            shadowRadius: size * 0.38,
+            elevation: 5,
+          },
         ]}
       >
         <Text

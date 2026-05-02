@@ -73,7 +73,7 @@ export default function LoginScreen() {
                 contentFit="cover"
               />
             </View>
-            <Text style={[styles.brand, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
+            <Text style={[styles.brand, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
               APIA
             </Text>
             <View style={styles.taglineRow}>
@@ -130,8 +130,8 @@ export default function LoginScreen() {
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={[styles.buttonText, { color: valid ? "#FFFFFF" : colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>
-                    Войти
+                  <Text style={[styles.buttonText, { color: valid ? "#FFFFFF" : colors.mutedForeground, fontFamily: "Inter_700Bold" }]}>
+                    ВОЙТИ
                   </Text>
                 )}
               </View>
@@ -152,26 +152,26 @@ const styles = StyleSheet.create({
   inner: { flex: 1, justifyContent: "space-between", paddingVertical: 12 },
   header: { alignItems: "center", gap: 10, paddingTop: 20 },
   beeBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.60)",
+    backgroundColor: "rgba(255,255,255,0.68)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.80)",
-    shadowColor: "#8B7355",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    borderColor: "rgba(255,255,255,0.90)",
+    shadowColor: "#7A6030",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 6,
   },
-  bee: { width: 64, height: 64, borderRadius: 32 },
-  brand: { fontSize: 54, letterSpacing: 8, includeFontPadding: false, marginTop: 6 },
+  bee: { width: 72, height: 72, borderRadius: 36 },
+  brand: { fontSize: 62, letterSpacing: 12, includeFontPadding: false, marginTop: 8 },
   taglineRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", justifyContent: "center", gap: 8 },
-  taglineWord: { fontSize: 10, letterSpacing: 1.5 },
-  dot: { width: 3, height: 3, borderRadius: 2 },
-  intro: { fontSize: 14, textAlign: "center", lineHeight: 21 },
+  taglineWord: { fontSize: 9, letterSpacing: 2.5, textTransform: "uppercase" as const },
+  dot: { width: 2.5, height: 2.5, borderRadius: 2 },
+  intro: { fontSize: 14, textAlign: "center", lineHeight: 22, opacity: 0.75 },
   formInner: { gap: 14, padding: 22 },
   field: { gap: 8 },
   label: { fontSize: 13, marginLeft: 2 },
@@ -182,16 +182,16 @@ const styles = StyleSheet.create({
   },
   input: { height: 54, fontSize: 16, letterSpacing: 0.2 },
   button: {
-    height: 58,
-    borderRadius: 29,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#8B7355",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowColor: "#8B6030",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.30,
+    shadowRadius: 18,
+    elevation: 6,
   },
-  buttonText: { fontSize: 16, letterSpacing: 0.3 },
+  buttonText: { fontSize: 16, letterSpacing: 1.5 },
   legal: { fontSize: 12, lineHeight: 18, textAlign: "center" },
 });

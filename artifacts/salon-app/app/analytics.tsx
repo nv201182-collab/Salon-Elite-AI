@@ -46,7 +46,7 @@ export default function AnalyticsScreen() {
         <Text style={[styles.eyebrow, { color: colors.gold, fontFamily: "Inter_500Medium" }]}>
           {user?.role === "hq" ? "ВСЕ САЛОНЫ" : "ВАШ САЛОН · РУКОВОДИТЕЛЬ"}
         </Text>
-        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
           Аналитика команды
         </Text>
       </View>
@@ -168,17 +168,17 @@ export default function AnalyticsScreen() {
 }
 
 const styles = StyleSheet.create({
-  eyebrow: { fontSize: 9, letterSpacing: 2 },
-  title: { fontSize: 28, letterSpacing: -0.6 },
+  eyebrow: { fontSize: 9, letterSpacing: 2.5, textTransform: "uppercase" as const },
+  title: { fontSize: 28, letterSpacing: -0.8 },
   statsRow: { flexDirection: "row", gap: 10 },
-  sectionLabel: { fontSize: 9, letterSpacing: 2 },
+  sectionLabel: { fontSize: 9, letterSpacing: 2.5, textTransform: "uppercase" as const, opacity: 0.55 },
   topRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  rank: { fontSize: 12, letterSpacing: 0.5, width: 22 },
+  rank: { fontSize: 11, letterSpacing: 0.5, width: 22, opacity: 0.70 },
   rowHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  topName: { fontSize: 14, letterSpacing: 0.1 },
-  topPts: { fontSize: 13, letterSpacing: 0.2 },
-  bar: { height: 3, marginTop: 6, marginBottom: 4, overflow: "hidden" },
-  specialty: { fontSize: 11, letterSpacing: 0.2 },
-  courseName: { fontSize: 13, letterSpacing: 0.1 },
+  topName: { fontSize: 14, letterSpacing: -0.1 },
+  topPts: { fontSize: 13, letterSpacing: 0.1 },
+  bar: { height: 4, marginTop: 6, marginBottom: 4, overflow: "hidden", borderRadius: 2 },
+  specialty: { fontSize: 11, letterSpacing: 0.2, opacity: 0.60 },
+  courseName: { fontSize: 13, letterSpacing: -0.1 },
   coursePct: { fontSize: 13, letterSpacing: 0.2 },
 });

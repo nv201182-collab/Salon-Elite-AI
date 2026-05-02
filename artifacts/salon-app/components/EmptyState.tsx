@@ -17,7 +17,7 @@ export function EmptyState({ icon = "circle", title, subtitle }: Props) {
       <View
         style={[
           styles.icon,
-          { backgroundColor: colors.card },
+          { backgroundColor: "rgba(255,252,247,0.85)" },
         ]}
       >
         <Feather name={icon} size={22} color={colors.pink} />
@@ -35,10 +35,21 @@ export function EmptyState({ icon = "circle", title, subtitle }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", justifyContent: "center", paddingVertical: 56, paddingHorizontal: 24, gap: 14 },
+  container: { alignItems: "center", justifyContent: "center", paddingVertical: 64, paddingHorizontal: 24, gap: 16 },
   icon: {
-    width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
+    shadowColor: "#7A6030",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  title: { fontSize: 16, letterSpacing: 0.1, textAlign: "center" },
-  subtitle: { fontSize: 13, lineHeight: 19, textAlign: "center", maxWidth: 280 },
+  title: { fontSize: 16, letterSpacing: -0.2, textAlign: "center" },
+  subtitle: { fontSize: 13, lineHeight: 20, textAlign: "center", maxWidth: 280, opacity: 0.68 },
 });

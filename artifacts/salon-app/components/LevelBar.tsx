@@ -45,7 +45,17 @@ export function LevelBar({ points, compact }: Props) {
           colors={[colors.pink, colors.purple]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={[styles.fill, { width: `${Math.max(2, ratio * 100)}%` }]}
+          style={[
+            styles.fill,
+            {
+              width: `${Math.max(3, ratio * 100)}%`,
+              shadowColor: colors.pink,
+              shadowOffset: { width: 4, height: 0 },
+              shadowOpacity: 0.55,
+              shadowRadius: 10,
+              elevation: 3,
+            },
+          ]}
         />
       </View>
 
@@ -67,7 +77,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "flex-end" },
   eyebrow: { fontSize: 12, letterSpacing: 0.1, marginBottom: 4 },
   level: { fontSize: 22, letterSpacing: -0.4 },
-  track: { height: 8, borderRadius: 4, overflow: "hidden" },
-  fill: { height: "100%", borderRadius: 4 },
+  track: { height: 4, borderRadius: 2, overflow: "hidden" },
+  fill: { height: "100%", borderRadius: 2 },
   hint: { fontSize: 12, letterSpacing: 0.1 },
 });
