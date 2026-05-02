@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Chip } from "@/components/Chip";
 import { CourseCard } from "@/components/CourseCard";
+import { useBeeRefresh } from "@/components/BeeRefreshIndicator";
 import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
 import { useData } from "@/contexts/DataContext";
@@ -30,6 +31,9 @@ export default function LearnScreen() {
   const { courses, getCourseProgress } = useData();
   const { onScroll } = useTabBar();
   const [filter, setFilter] = useState<Course["category"] | "Все">("Все");
+  const { refreshing, handleRefresh, beeIndicator } = useBeeRefresh(async () => {
+    await new Promise((r) => setTimeout(r, 1000));
+  });
 
   const filtered = useMemo(
     () => (filter === "Все" ? courses : courses.filter((c) => c.category === filter)),
@@ -54,6 +58,15 @@ export default function LearnScreen() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        }
       >
         <View style={[styles.header, { paddingTop: headerPad }]}>
           <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Развитие</Text>
@@ -75,6 +88,7 @@ export default function LearnScreen() {
           ))}
         </View>
       </ScrollView>
+      {beeIndicator}
     </FocusFadeView>
   );
 }

@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -256,7 +257,22 @@ export default function FeedScreen() {
                         style={[styles.storyRing, isViewed && styles.storyRingViewed]}
                       >
                         <View style={[styles.storyInner, { backgroundColor: "rgba(255,255,255,0.98)" }]}>
-                          <Avatar initials={s.initials} size={52} />
+                          {/* Show actual photo if available, else initials */}
+                          {isYou && hasStories && myStories[myStories.length - 1]?.mediaUri ? (
+                            <Image
+                              source={{ uri: myStories[myStories.length - 1].mediaUri }}
+                              style={{ width: 52, height: 52, borderRadius: 26 }}
+                              contentFit="cover"
+                            />
+                          ) : !isYou && s.frames.length > 0 ? (
+                            <Image
+                              source={{ uri: s.frames[s.frames.length - 1] }}
+                              style={{ width: 52, height: 52, borderRadius: 26 }}
+                              contentFit="cover"
+                            />
+                          ) : (
+                            <Avatar initials={s.initials} size={52} />
+                          )}
                           {isYou && !hasStories ? (
                             <View style={[styles.plusPill, { backgroundColor: "#C8A064", borderColor: "rgba(255,255,255,0.98)" }]}>
                               <Feather name="plus" size={11} color="#FFFFFF" />

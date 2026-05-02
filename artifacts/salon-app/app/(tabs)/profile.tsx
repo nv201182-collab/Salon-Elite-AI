@@ -7,6 +7,7 @@ import {
   Alert,
   Dimensions,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { useBeeRefresh } from "@/components/BeeRefreshIndicator";
 import { GlassCard } from "@/components/GlassCard";
 import { LevelBar } from "@/components/LevelBar";
 import { FocusFadeView } from "@/components/FocusFadeView";
@@ -66,6 +68,9 @@ export default function ProfileScreen() {
   const { onScroll } = useTabBar();
   const [gridTab, setGridTab] = useState<GridTab>("posts");
   const [openPost, setOpenPost] = useState<Post | null>(null);
+  const { refreshing, handleRefresh, beeIndicator } = useBeeRefresh(async () => {
+    await new Promise((r) => setTimeout(r, 1000));
+  });
 
   if (!user) return null;
 
@@ -102,6 +107,15 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        }
       >
         {/* ── Top bar ─────────────────────────────────────── */}
         <View style={[styles.topBar, { paddingTop: headerPad }]}>
@@ -379,6 +393,7 @@ export default function ProfileScreen() {
 
       {/* Post detail overlay (comments) */}
       <CommentsSheet post={openPost} visible={!!openPost} onClose={() => setOpenPost(null)} />
+      {beeIndicator}
     </FocusFadeView>
   );
 }
