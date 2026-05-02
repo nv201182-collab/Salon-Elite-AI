@@ -33,7 +33,7 @@ import { useColors } from "@/hooks/useColors";
 const TABS = [
   { name: "feed",    route: "/(tabs)/feed",    label: "Лента",    icon: "image"          as const },
   { name: "index",   route: "/(tabs)/",        label: "Главная",  icon: "home"           as const },
-  { name: "learn",   route: "/(tabs)/learn",   label: "Обучение", icon: "book-open"      as const },
+  { name: "learn",   route: "/(tabs)/learn",   label: "Развитие", icon: "book-open"      as const },
   { name: "chat",    route: "/(tabs)/chat",    label: "Чаты",     icon: "message-circle" as const },
   { name: "profile", route: "/(tabs)/profile", label: "Профиль",  icon: "user"           as const },
 ];

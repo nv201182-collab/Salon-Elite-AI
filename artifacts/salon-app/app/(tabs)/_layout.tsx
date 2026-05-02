@@ -36,7 +36,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="feed" options={{ title: "Лента" }} />
       <Tabs.Screen name="index" options={{ title: "Главная" }} />
-      <Tabs.Screen name="learn" options={{ title: "Обучение" }} />
+      <Tabs.Screen name="learn" options={{ title: "Развитие" }} />
       <Tabs.Screen name="chat" options={{ title: "Чаты" }} />
       <Tabs.Screen name="profile" options={{ title: "Профиль" }} />
     </Tabs>

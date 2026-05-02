@@ -137,7 +137,7 @@ export default function HomeScreen() {
               borderRadius={22}
             >
               <View style={{ flex: 1, gap: 6 }}>
-                <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Обучение</Text>
+                <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Развитие</Text>
                 <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                   {inProgressCourse.title}
                 </Text>

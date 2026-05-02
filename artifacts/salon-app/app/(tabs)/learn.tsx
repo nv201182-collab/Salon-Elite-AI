@@ -56,7 +56,7 @@ export default function LearnScreen() {
         onScroll={handleScroll}
       >
         <View style={[styles.header, { paddingTop: headerPad }]}>
-          <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Обучение</Text>
+          <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Развитие</Text>
           <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Программа APIA</Text>
           <Text style={[styles.summary, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
             {completedCount} из {courses.length} курсов завершено. Каждый урок начисляет баллы и открывает следующий.

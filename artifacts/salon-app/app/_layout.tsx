@@ -46,7 +46,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 function RootLayoutNav() {
-  const palette = colors.dark ?? colors.light;
+  const palette = colors.light;
   return (
     <>
       <Stack
@@ -138,7 +138,7 @@ export default function RootLayout() {
               <AppProvider>
                 <DataProvider>
                   <TabBarProvider>
-                    <StatusBar style="dark" />
+                    <StatusBar style="dark" backgroundColor="#FFFFFF" />
                     <AuthGate>
                       <RootLayoutNav />
                     </AuthGate>
