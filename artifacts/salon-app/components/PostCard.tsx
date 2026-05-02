@@ -67,12 +67,21 @@ export function PostCard({ post, isActive = false }: Props) {
   const likeS    = useSharedValue(1);
 
   /* ── Helpers via runOnJS ────────────────────────────────── */
-  const doLike = () => {
-    toggleLike(post.id);
+  const bounceHeart = () => {
     likeS.value = withSequence(
-      withSpring(1.4, { damping: 5, stiffness: 400 }),
+      withSpring(1.45, { damping: 4, stiffness: 420 }),
       withSpring(1.0, { damping: 10, stiffness: 260 }),
     );
+  };
+  // Tap on like button — toggle both ways + bounce
+  const handleTapLike = () => {
+    toggleLike(post.id);
+    bounceHeart();
+  };
+  // Double-tap on image — only add like (never remove) + burst
+  const handleDoubleTapLike = () => {
+    if (!liked) toggleLike(post.id);
+    bounceHeart();
   };
   const openComments = () => setCommentsOpen(true);
 
@@ -95,7 +104,7 @@ export function PostCard({ post, isActive = false }: Props) {
     .onStart(() => {
       "worklet";
       burstHeart();
-      runOnJS(doLike)();
+      runOnJS(handleDoubleTapLike)();
     });
 
   const singleTap = Gesture.Tap()
@@ -206,7 +215,7 @@ export function PostCard({ post, isActive = false }: Props) {
 
       {/* ── Action bar ─────────────────────────────────────── */}
       <View style={styles.actions}>
-        <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.82}>
+        <PressableScale onPress={handleTapLike} scaleTo={0.82}>
           <Animated.View style={[styles.actionBtn, likeIconStyle]}>
             <MaterialCommunityIcons
               name={liked ? "heart" : "heart-outline"}
