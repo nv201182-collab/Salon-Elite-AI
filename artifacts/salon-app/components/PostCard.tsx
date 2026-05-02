@@ -1,13 +1,16 @@
 /**
- * PostCard — Feed card with:
- *  1. Double-tap photo → like + full-screen heart burst animation
- *  2. Single-tap photo → slide-up comments sheet (no navigation)
- *  3. Pinch on photo → zoom; release → spring back to 1×
+ * PostCard — Instagram-style feed card
+ *  1. Author header above the image
+ *  2. Double-tap photo → like + heart burst animation
+ *  3. Single-tap photo → slide-up comments sheet
+ *  4. Pinch on photo → zoom; release → spring back
+ *  5. Likes summary "Нравится X людям"
+ *  6. Caption + last comment inline
  */
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React, { useState } from "react";
-import { Share, StyleSheet, Text, View } from "react-native";
+import { Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -25,7 +28,6 @@ import { EMPLOYEES_SEED, type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 import { Avatar } from "./Avatar";
 import { CommentsSheet } from "./CommentsSheet";
-import { GlassCard } from "./GlassCard";
 import { PressableScale } from "./PressableScale";
 import { VideoInFeed } from "./VideoInFeed";
 
@@ -34,7 +36,7 @@ type Props = { post: Post; isActive?: boolean };
 function timeAgo(at: number): string {
   const diff = Date.now() - at;
   const h = Math.round(diff / 3_600_000);
-  if (h < 1) return "сейчас";
+  if (h < 1) return "только что";
   if (h < 24) return `${h} ч`;
   return `${Math.round(h / 24)} дн`;
 }
@@ -53,14 +55,25 @@ export function PostCard({ post, isActive = false }: Props) {
   const liked = user ? post.likedBy.includes(user.id) : false;
   const saved = user ? post.savedBy.includes(user.id) : false;
   const isVideo = !!post.video;
+  const isMine = post.authorId === "u_self" || post.authorId === user?.id;
 
-  /* ── Shared values ─────────────────────────────────────── */
-  const imgScale  = useSharedValue(1);     // pinch-to-zoom
-  const heartS    = useSharedValue(0);     // heart pop scale
-  const heartO    = useSharedValue(0);     // heart opacity
+  const handleName = `@${(author?.name ?? "maison").split(" ")[0].toLowerCase()}`;
+  const lastComment = post.comments[post.comments.length - 1];
 
-  /* ── Helpers called from worklets via runOnJS ─────────── */
-  const doLike = () => { if (!liked) toggleLike(post.id); };
+  /* ── Shared values ──────────────────────────────────────── */
+  const imgScale = useSharedValue(1);
+  const heartS   = useSharedValue(0);
+  const heartO   = useSharedValue(0);
+  const likeS    = useSharedValue(1);
+
+  /* ── Helpers via runOnJS ────────────────────────────────── */
+  const doLike = () => {
+    toggleLike(post.id);
+    likeS.value = withSequence(
+      withSpring(1.4, { damping: 5, stiffness: 400 }),
+      withSpring(1.0, { damping: 10, stiffness: 260 }),
+    );
+  };
   const openComments = () => setCommentsOpen(true);
 
   const burstHeart = () => {
@@ -75,7 +88,7 @@ export function PostCard({ post, isActive = false }: Props) {
     );
   };
 
-  /* ── Gestures ─────────────────────────────────────────── */
+  /* ── Gestures ───────────────────────────────────────────── */
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .maxDelay(300)
@@ -105,7 +118,7 @@ export function PostCard({ post, isActive = false }: Props) {
 
   const composed = Gesture.Simultaneous(pinch, doubleTap, singleTap);
 
-  /* ── Animated styles ──────────────────────────────────── */
+  /* ── Animated styles ────────────────────────────────────── */
   const imgStyle = useAnimatedStyle(() => ({
     transform: [{ scale: imgScale.value }],
   }));
@@ -113,6 +126,10 @@ export function PostCard({ post, isActive = false }: Props) {
   const heartStyle = useAnimatedStyle(() => ({
     opacity: heartO.value,
     transform: [{ scale: heartS.value }],
+  }));
+
+  const likeIconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: likeS.value }],
   }));
 
   const handleShare = async () => {
@@ -124,103 +141,149 @@ export function PostCard({ post, isActive = false }: Props) {
   };
 
   return (
-    <View style={styles.outerWrap}>
-      <GlassCard borderRadius={22} innerStyle={{ padding: 0 }} tintOpacity={0.30}>
+    <View style={[styles.card, { backgroundColor: "rgba(255,255,255,0.72)" }]}>
 
-        {/* ── Photo / video area ──────────────────────── */}
-        <GestureDetector gesture={composed}>
-          <View style={[styles.imageWrap, { backgroundColor: "#0D0D0D" }]}>
-            {/* Actual media */}
-            {isVideo && isActive ? (
-              <VideoInFeed source={post.video!} isActive={isActive} />
-            ) : (
-              <Animated.View style={[StyleSheet.absoluteFillObject, imgStyle]}>
-                <Image
-                  source={post.image}
-                  style={StyleSheet.absoluteFillObject}
-                  contentFit="cover"
-                  transition={300}
-                />
-              </Animated.View>
-            )}
-
-            {/* Video overlays */}
-            {isVideo && !isActive && (
-              <View style={styles.playOverlay}>
-                <View style={styles.playCircle}>
-                  <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
-                </View>
-              </View>
-            )}
-            {isVideo && (
-              <View style={styles.videoBadge}>
-                <Feather name="video" size={11} color="#FFFFFF" />
-                <Text style={[styles.videoBadgeText, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>Видео</Text>
-              </View>
-            )}
-
-            {/* ── Heart burst animation ──────────────── */}
-            <Animated.View style={[styles.heartBurst, heartStyle]} pointerEvents="none">
-              <Feather name="heart" size={120} color="#FF3B6F" style={styles.heartIcon} />
-            </Animated.View>
-          </View>
-        </GestureDetector>
-
-        {/* ── Card body ───────────────────────────────── */}
-        <View style={styles.body}>
-          <View style={styles.headerRow}>
-            <Avatar initials={author?.initials ?? "M"} size={34} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.handle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                @{(author?.name ?? "maison").split(" ")[0].toLowerCase()}_{(author?.name ?? "").split(" ")[1]?.toLowerCase().slice(0, 6) ?? "maison"}
-              </Text>
-              <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
-              </Text>
-            </View>
-          </View>
-
-          <Text numberOfLines={3} style={[styles.caption, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
-            {post.caption}
+      {/* ── Author header ──────────────────────────────────── */}
+      <View style={styles.authorRow}>
+        <View style={[styles.avatarRing, { borderColor: liked ? "#C8A064" : "rgba(200,160,100,0.30)" }]}>
+          <Avatar initials={author?.initials ?? "M"} size={34} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.handle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            {handleName}
           </Text>
-
-          {post.tags.length > 0 && (
-            <Text style={[styles.tags, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
-              {post.tags.map((t) => `#${t}`).join("  ")}
+          <Text style={[styles.specialty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            {author?.specialty ?? ""} · {timeAgo(post.createdAt)}
+          </Text>
+        </View>
+        {!isMine && (
+          <TouchableOpacity style={[styles.followBtn, { borderColor: colors.accent }]}>
+            <Text style={[styles.followText, { color: colors.accent, fontFamily: "Inter_600SemiBold" }]}>
+              Следить
             </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity hitSlop={10} style={{ paddingLeft: 8 }}>
+          <Feather name="more-horizontal" size={18} color={colors.mutedForeground} />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Photo / video area ─────────────────────────────── */}
+      <GestureDetector gesture={composed}>
+        <View style={[styles.imageWrap, { backgroundColor: "#0D0D0D" }]}>
+          {isVideo && isActive ? (
+            <VideoInFeed source={post.video!} isActive={isActive} />
+          ) : (
+            <Animated.View style={[StyleSheet.absoluteFillObject, imgStyle]}>
+              <Image
+                source={post.image}
+                style={StyleSheet.absoluteFillObject}
+                contentFit="cover"
+                transition={300}
+              />
+            </Animated.View>
           )}
 
-          <View style={styles.actions}>
-            {/* Like */}
-            <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.85}>
-              <View style={styles.actionItem}>
-                <Feather name="heart" size={20} color={liked ? colors.pink : colors.mutedForeground} />
-                <Text style={[styles.actionNum, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                  {post.likedBy.length}
-                </Text>
+          {isVideo && !isActive && (
+            <View style={styles.playOverlay}>
+              <View style={styles.playCircle}>
+                <Feather name="play" size={22} color="#1a1a1a" style={{ marginLeft: 2 }} />
               </View>
-            </PressableScale>
+            </View>
+          )}
+          {isVideo && (
+            <View style={styles.videoBadge}>
+              <Feather name="video" size={11} color="#FFFFFF" />
+              <Text style={[styles.videoBadgeText, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>Видео</Text>
+            </View>
+          )}
 
-            {/* Comments — opens sheet */}
-            <PressableScale onPress={() => setCommentsOpen(true)} scaleTo={0.85}>
-              <View style={styles.actionItem}>
-                <Feather name="message-circle" size={20} color={colors.mutedForeground} />
-                <Text style={[styles.actionNum, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                  {post.comments.length}
-                </Text>
-              </View>
-            </PressableScale>
-
-            <PressableScale onPress={handleShare} scaleTo={0.85}>
-              <Feather name="share-2" size={20} color={colors.mutedForeground} />
-            </PressableScale>
-            <View style={{ flex: 1 }} />
-            <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.85}>
-              <Feather name="bookmark" size={20} color={saved ? colors.pink : colors.mutedForeground} />
-            </PressableScale>
-          </View>
+          <Animated.View style={[styles.heartBurst, heartStyle]} pointerEvents="none">
+            <Feather name="heart" size={100} color="#FFFFFF" style={styles.heartIconShadow} />
+          </Animated.View>
         </View>
-      </GlassCard>
+      </GestureDetector>
+
+      {/* ── Action bar ─────────────────────────────────────── */}
+      <View style={styles.actions}>
+        <PressableScale onPress={() => toggleLike(post.id)} scaleTo={0.82}>
+          <Animated.View style={[styles.actionBtn, likeIconStyle]}>
+            <MaterialCommunityIcons
+              name={liked ? "heart" : "heart-outline"}
+              size={26}
+              color={liked ? "#FF3B6F" : colors.foreground}
+            />
+          </Animated.View>
+        </PressableScale>
+
+        <PressableScale onPress={() => setCommentsOpen(true)} scaleTo={0.82}>
+          <View style={styles.actionBtn}>
+            <MaterialCommunityIcons name="comment-outline" size={24} color={colors.foreground} />
+          </View>
+        </PressableScale>
+
+        <PressableScale onPress={handleShare} scaleTo={0.82}>
+          <View style={styles.actionBtn}>
+            <Feather name="send" size={22} color={colors.foreground} />
+          </View>
+        </PressableScale>
+
+        <View style={{ flex: 1 }} />
+
+        <PressableScale onPress={() => toggleSave(post.id)} scaleTo={0.82}>
+          <View style={styles.actionBtn}>
+            <MaterialCommunityIcons
+              name={saved ? "bookmark" : "bookmark-outline"}
+              size={26}
+              color={saved ? "#C8A064" : colors.foreground}
+            />
+          </View>
+        </PressableScale>
+      </View>
+
+      {/* ── Likes summary ──────────────────────────────────── */}
+      <View style={styles.body}>
+        {post.likedBy.length > 0 && (
+          <Text style={[styles.likesText, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            Нравится {post.likedBy.length.toLocaleString("ru-RU")} {likesWord(post.likedBy.length)}
+          </Text>
+        )}
+
+        {/* Caption */}
+        <Text numberOfLines={3} style={[styles.caption, { color: colors.foreground }]}>
+          <Text style={[styles.captionHandle, { fontFamily: "Inter_600SemiBold" }]}>{handleName} </Text>
+          <Text style={{ fontFamily: "Inter_400Regular" }}>{post.caption}</Text>
+        </Text>
+
+        {/* Tags */}
+        {post.tags.length > 0 && (
+          <Text style={[styles.tags, { color: colors.accent, fontFamily: "Inter_500Medium" }]}>
+            {post.tags.map((t) => `#${t}`).join("  ")}
+          </Text>
+        )}
+
+        {/* Comments preview */}
+        {post.comments.length > 1 && (
+          <TouchableOpacity onPress={() => setCommentsOpen(true)}>
+            <Text style={[styles.viewAllComments, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              Посмотреть все комментарии ({post.comments.length})
+            </Text>
+          </TouchableOpacity>
+        )}
+        {lastComment && (
+          <Text numberOfLines={2} style={[styles.lastComment, { color: colors.foreground }]}>
+            <Text style={{ fontFamily: "Inter_600SemiBold" }}>
+              @{commentAuthorHandle(lastComment.authorId)}{" "}
+            </Text>
+            <Text style={{ fontFamily: "Inter_400Regular" }}>{lastComment.text}</Text>
+          </Text>
+        )}
+
+        {/* Time */}
+        <Text style={[styles.timeText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+          {timeAgo(post.createdAt)} назад
+        </Text>
+      </View>
 
       {/* Comments bottom sheet */}
       <CommentsSheet
@@ -232,9 +295,47 @@ export function PostCard({ post, isActive = false }: Props) {
   );
 }
 
+function likesWord(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 14) return "людям";
+  if (mod10 === 1) return "человеку";
+  if (mod10 >= 2 && mod10 <= 4) return "людям";
+  return "людям";
+}
+
+function commentAuthorHandle(authorId: string): string {
+  if (authorId === "u_self") return "вы";
+  const emp = EMPLOYEES_SEED.find((e) => e.id === authorId);
+  return emp ? emp.name.split(" ")[0].toLowerCase() : "мастер";
+}
+
 const styles = StyleSheet.create({
-  outerWrap: { marginHorizontal: 16 },
-  imageWrap: { width: "100%", aspectRatio: 4 / 5, overflow: "hidden" },
+  card: {
+    marginHorizontal: 0,
+    borderRadius: 0,
+    overflow: "hidden",
+  },
+  authorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  avatarRing: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 2,
+  },
+  handle: { fontSize: 13, letterSpacing: -0.1 },
+  specialty: { fontSize: 11, marginTop: 1, opacity: 0.7 },
+  followBtn: {
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 8, borderWidth: 1.2,
+  },
+  followText: { fontSize: 12, letterSpacing: 0.2 },
+  imageWrap: { width: "100%", aspectRatio: 1, overflow: "hidden" },
   playOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
@@ -252,27 +353,37 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.55)",
     paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999,
   },
-  videoBadgeText: { fontSize: 10, letterSpacing: 0.1 },
-  /** Heart burst */
+  videoBadgeText: { fontSize: 10 },
   heartBurst: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
   },
-  heartIcon: {
-    shadowColor: "#FF3B6F",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 30,
+  heartIconShadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
   },
-  /** Body */
-  body: { padding: 16, gap: 12 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  handle: { fontSize: 13, letterSpacing: -0.1 },
-  specialty: { fontSize: 11, marginTop: 2, letterSpacing: 0.2, opacity: 0.70 },
-  caption: { fontSize: 14, lineHeight: 21, letterSpacing: 0.1 },
-  tags: { fontSize: 11, letterSpacing: 0.4 },
-  actions: { flexDirection: "row", alignItems: "center", gap: 20, paddingTop: 2 },
-  actionItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-  actionNum: { fontSize: 13, letterSpacing: 0.1 },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  actionBtn: {
+    padding: 6,
+  },
+  body: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    gap: 5,
+  },
+  likesText: { fontSize: 13 },
+  caption: { fontSize: 14, lineHeight: 20 },
+  captionHandle: { fontSize: 14 },
+  tags: { fontSize: 12, letterSpacing: 0.3 },
+  viewAllComments: { fontSize: 13 },
+  lastComment: { fontSize: 13, lineHeight: 19 },
+  timeText: { fontSize: 11, marginTop: 2 },
 });

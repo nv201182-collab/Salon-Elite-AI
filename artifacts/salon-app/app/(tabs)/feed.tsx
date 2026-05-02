@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, ScrollView, StyleSheet, Text, View, ViewToken } from "react-native";
+import { FlatList, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, ViewToken } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
@@ -28,7 +28,6 @@ const FILTERS: { key: Post["category"] | "all"; label: string }[] = [
   { key: "skin", label: "Уход" },
 ];
 
-/** Extract a URI string from ImageSrc (skip local number assets) */
 function toUri(src: ImageSrc): string | null {
   if (typeof src === "object" && "uri" in src) return src.uri;
   return null;
@@ -44,6 +43,7 @@ export default function FeedScreen() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [storyViewerIdx, setStoryViewerIdx] = useState<number | null>(null);
   const [viewedStories, setViewedStories] = useState<Set<string>>(new Set());
+  const [notifCount] = useState(3);
 
   const handleStoryViewed = useCallback((id: string) => {
     setViewedStories((prev) => {
@@ -67,7 +67,6 @@ export default function FeedScreen() {
     [posts, filter]
   );
 
-  /** Build story items: "Вы" card + one card per employee with their post images */
   const stories = useMemo<StoryItem[]>(() => {
     const empStories: StoryItem[] = employees.slice(0, 14).map((e) => {
       const empPosts = posts.filter((p) => p.authorId === e.id);
@@ -84,7 +83,6 @@ export default function FeedScreen() {
       };
     });
 
-    // Сториз пользователя — каждая запись становится отдельным frame
     const youRichFrames = myStories.map((s) => ({
       uri: s.mediaUri,
       text: s.text || undefined,
@@ -104,7 +102,7 @@ export default function FeedScreen() {
   }, [employees, posts, user, myStories]);
 
   const { onScroll: tabOnScroll } = useTabBar();
-  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
+  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 10);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
   const handleScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -124,29 +122,52 @@ export default function FeedScreen() {
         onScroll={handleScroll}
         ListHeaderComponent={
           <View>
-            {/* ── Header ─────────────────────────────────── */}
+            {/* ── Header ────────────────────────────────────── */}
             <View style={[styles.header, { paddingTop: headerPad }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
-                  Лента
-                </Text>
-                <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
-                  Работы команды
-                </Text>
+              {/* APIA logo */}
+              <View style={styles.logoWrap}>
+                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>A</Text>
+                <Text style={[styles.logoDot, { color: "#C8A064", fontFamily: "Inter_700Bold" }]}>·</Text>
+                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>P</Text>
+                <Text style={[styles.logoDot, { color: "#C8A064", fontFamily: "Inter_700Bold" }]}>·</Text>
+                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>I</Text>
+                <Text style={[styles.logoDot, { color: "#C8A064", fontFamily: "Inter_700Bold" }]}>·</Text>
+                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>A</Text>
               </View>
+
+              <View style={{ flex: 1 }} />
+
+              {/* DM button */}
+              <TouchableOpacity style={styles.iconBtn} onPress={() => router.push("/(tabs)/chat")}>
+                <Feather name="send" size={22} color={colors.foreground} />
+              </TouchableOpacity>
+
+              {/* Notifications bell with badge */}
+              <TouchableOpacity style={styles.iconBtn}>
+                <Feather name="bell" size={22} color={colors.foreground} />
+                {notifCount > 0 && (
+                  <View style={[styles.badge, { backgroundColor: "#FF3B6F" }]}>
+                    <Text style={[styles.badgeText, { color: "#fff", fontFamily: "Inter_700Bold" }]}>
+                      {notifCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* New post button */}
               <PressableScale onPress={() => router.push("/post/new")} scaleTo={0.94}>
                 <LinearGradient
-                  colors={[colors.pink, colors.purple]}
+                  colors={["#C8A064", "#8B5E3C"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.addBtn}
                 >
-                  <Feather name="plus" size={22} color="#FFFFFF" />
+                  <Feather name="plus" size={20} color="#FFFFFF" />
                 </LinearGradient>
               </PressableScale>
             </View>
 
-            {/* ── Stories ─────────────────────────────────── */}
+            {/* ── Stories ──────────────────────────────────── */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -166,52 +187,50 @@ export default function FeedScreen() {
                     : ["#C8A064", "#8B5E3C"];
 
                 return (
-                <PressableScale
-                  key={s.id}
-                  onPress={() => {
-                    if (isYou) {
-                      if (!hasStories) { router.push("/story/new"); return; }
-                      setStoryViewerIdx(0);
-                      return;
-                    }
-                    setStoryViewerIdx(idx);
-                  }}
-                  scaleTo={0.95}
-                >
-                  <View style={styles.storyItem}>
-                    <LinearGradient
-                      colors={ringColors}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.storyRing, isViewed && styles.storyRingViewed]}
-                    >
-                      <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
-                        <Avatar initials={s.initials} size={56} />
-                        {isYou && !hasStories ? (
-                          <View
-                            style={[
-                              styles.plusPill,
-                              { backgroundColor: "#C8A064", borderColor: "rgba(248,243,236,0.95)" },
-                            ]}
-                          >
-                            <Feather name="plus" size={12} color="#FFFFFF" />
-                          </View>
-                        ) : !isYou && s.frames.length > 0 ? (
-                          <View style={[styles.dotPill, { backgroundColor: "#C8A064" }]} />
-                        ) : null}
-                      </View>
-                    </LinearGradient>
-                    <Text
-                      numberOfLines={1}
-                      style={[styles.storyName, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}
-                    >
-                      {s.name}
-                    </Text>
-                  </View>
-                </PressableScale>
+                  <PressableScale
+                    key={s.id}
+                    onPress={() => {
+                      if (isYou) {
+                        if (!hasStories) { router.push("/story/new"); return; }
+                        setStoryViewerIdx(0);
+                        return;
+                      }
+                      setStoryViewerIdx(idx);
+                    }}
+                    scaleTo={0.95}
+                  >
+                    <View style={styles.storyItem}>
+                      <LinearGradient
+                        colors={ringColors}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.storyRing, isViewed && styles.storyRingViewed]}
+                      >
+                        <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
+                          <Avatar initials={s.initials} size={52} />
+                          {isYou && !hasStories ? (
+                            <View style={[styles.plusPill, { backgroundColor: "#C8A064", borderColor: "rgba(248,243,236,0.95)" }]}>
+                              <Feather name="plus" size={11} color="#FFFFFF" />
+                            </View>
+                          ) : !isYou && s.frames.length > 0 ? (
+                            <View style={[styles.dotPill, { backgroundColor: "#C8A064" }]} />
+                          ) : null}
+                        </View>
+                      </LinearGradient>
+                      <Text
+                        numberOfLines={1}
+                        style={[styles.storyName, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}
+                      >
+                        {s.name}
+                      </Text>
+                    </View>
+                  </PressableScale>
                 );
               })}
             </ScrollView>
+
+            {/* ── Divider ─────────────────────────────────── */}
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             {/* ── Trends ──────────────────────────────────── */}
             <View style={styles.trendsWrap}>
@@ -219,7 +238,7 @@ export default function FeedScreen() {
                 <Text style={[styles.trendsEyebrow, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
                   Тренды APIA
                 </Text>
-                <Feather name="trending-up" size={14} color={colors.pink} />
+                <Feather name="trending-up" size={14} color="#C8A064" />
               </View>
               <ScrollView
                 horizontal
@@ -237,9 +256,9 @@ export default function FeedScreen() {
                     <Text style={[styles.trendMeta, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
                       {t.posts}
                     </Text>
-                    <View style={[styles.trendBadge, { backgroundColor: colors.pinkSoft }]}>
-                      <Feather name="arrow-up-right" size={10} color={colors.pink} />
-                      <Text style={[styles.trendGrowth, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
+                    <View style={[styles.trendBadge, { backgroundColor: "rgba(200,160,100,0.15)" }]}>
+                      <Feather name="arrow-up-right" size={10} color="#C8A064" />
+                      <Text style={[styles.trendGrowth, { color: "#C8A064", fontFamily: "Inter_600SemiBold" }]}>
                         {Math.round(t.growth * 100)}%
                       </Text>
                     </View>
@@ -248,7 +267,7 @@ export default function FeedScreen() {
               </ScrollView>
             </View>
 
-            {/* ── Category filters ─────────────────────── */}
+            {/* ── Category filters ─────────────────────────── */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -268,7 +287,7 @@ export default function FeedScreen() {
         renderItem={({ item }) => (
           <PostCard post={item} isActive={item.id === activeVideoId} />
         )}
-        ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
+        ItemSeparatorComponent={() => <View style={[styles.postDivider, { backgroundColor: colors.border }]} />}
         ListEmptyComponent={
           <EmptyState
             icon="image"
@@ -279,7 +298,7 @@ export default function FeedScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* ── Story Viewer ─────────────────────────────── */}
+      {/* ── Story Viewer ─────────────────────────────────── */}
       <StoryViewer
         stories={stories}
         initialIndex={storyViewerIdx ?? 0}
@@ -305,59 +324,69 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    gap: 12,
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    gap: 8,
   },
-  eyebrow: { fontSize: 10, letterSpacing: 2.5, marginBottom: 6, textTransform: "uppercase" as const },
-  title: { fontSize: 30, letterSpacing: -0.8 },
-  addBtn: {
-    width: 48, height: 48, borderRadius: 24,
+  logoWrap: { flexDirection: "row", alignItems: "center", gap: 2 },
+  logoA: { fontSize: 20, letterSpacing: 1 },
+  logoDot: { fontSize: 18, marginBottom: 1 },
+  iconBtn: { padding: 6, position: "relative" },
+  badge: {
+    position: "absolute", top: 2, right: 2,
+    width: 16, height: 16, borderRadius: 8,
     alignItems: "center", justifyContent: "center",
   },
-  storiesRow: { gap: 12, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 },
-  storyItem: { alignItems: "center", gap: 6, width: 70 },
+  badgeText: { fontSize: 9 },
+  addBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    alignItems: "center", justifyContent: "center",
+  },
+  divider: { height: StyleSheet.hairlineWidth, marginTop: 4 },
+  storiesRow: { gap: 10, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10 },
+  storyItem: { alignItems: "center", gap: 5, width: 66 },
   storyRing: {
-    width: 64, height: 64, borderRadius: 32,
+    width: 62, height: 62, borderRadius: 31,
     alignItems: "center", justifyContent: "center",
     padding: 2.5,
   },
   storyRingViewed: { opacity: 0.55 },
   storyInner: {
-    flex: 1, alignSelf: "stretch", borderRadius: 30,
+    flex: 1, alignSelf: "stretch", borderRadius: 28,
     alignItems: "center", justifyContent: "center",
   },
-  storyName: { fontSize: 11, letterSpacing: 0.1 },
+  storyName: { fontSize: 11 },
   plusPill: {
     position: "absolute", bottom: -2, right: -2,
-    width: 22, height: 22, borderRadius: 11,
+    width: 20, height: 20, borderRadius: 10,
     alignItems: "center", justifyContent: "center",
     borderWidth: 2,
   },
   dotPill: {
     position: "absolute", bottom: 2, right: 2,
-    width: 10, height: 10, borderRadius: 5,
+    width: 9, height: 9, borderRadius: 5,
     borderWidth: 1.5, borderColor: "rgba(248,243,236,0.95)",
   },
-  trendsWrap: { paddingTop: 8, paddingBottom: 4 },
+  trendsWrap: { paddingTop: 12, paddingBottom: 4 },
   trendsHead: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 20, paddingBottom: 8,
+    paddingHorizontal: 16, paddingBottom: 8,
   },
   trendsEyebrow: { fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase" },
-  trendsRow: { gap: 8, paddingHorizontal: 16 },
+  trendsRow: { gap: 8, paddingHorizontal: 14 },
   trendChip: {
     flexDirection: "row", alignItems: "center",
-    paddingVertical: 10, paddingHorizontal: 12,
+    paddingVertical: 8, paddingHorizontal: 12,
     borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, gap: 8,
   },
-  trendTag: { fontSize: 13, letterSpacing: 0.1 },
+  trendTag: { fontSize: 13 },
   trendMeta: { fontSize: 11 },
   trendBadge: {
     flexDirection: "row", alignItems: "center",
     paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999, gap: 2,
   },
-  trendGrowth: { fontSize: 10, letterSpacing: 0.1 },
-  chipsRow: { gap: 8, paddingHorizontal: 20, paddingVertical: 8, paddingBottom: 16 },
+  trendGrowth: { fontSize: 10 },
+  chipsRow: { gap: 8, paddingHorizontal: 14, paddingVertical: 10, paddingBottom: 14 },
+  postDivider: { height: StyleSheet.hairlineWidth },
 });
