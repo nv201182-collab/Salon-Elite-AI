@@ -1,318 +1,366 @@
+/**
+ * Explore screen — Instagram-style discovery:
+ *  • Search bar
+ *  • Category chips
+ *  • Masonry-style 3-column grid of all posts
+ *  • Tap → full-screen post detail with comments
+ */
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useCallback, useMemo } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
-import { GlassCard } from "@/components/GlassCard";
-import { LevelBar } from "@/components/LevelBar";
+import { CommentsSheet } from "@/components/CommentsSheet";
 import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
-import { PressableScale } from "@/components/PressableScale";
-import { SectionHeader } from "@/components/SectionHeader";
 import { useApp } from "@/contexts/AppContext";
 import { useData } from "@/contexts/DataContext";
 import { useTabBar } from "@/contexts/TabBarContext";
+import { EMPLOYEES_SEED, type Post } from "@/data/seed";
 import { useColors } from "@/hooks/useColors";
 
-export default function HomeScreen() {
+const { width: W } = Dimensions.get("window");
+const COL_GAP = 2;
+const COL_W = (W - COL_GAP * 2) / 3;
+
+const CATEGORIES = [
+  { key: "all",    label: "Всё" },
+  { key: "hair",   label: "Волосы" },
+  { key: "nails",  label: "Ногти" },
+  { key: "makeup", label: "Макияж" },
+  { key: "brows",  label: "Брови" },
+  { key: "skin",   label: "Уход" },
+] as const;
+
+type Cat = typeof CATEGORIES[number]["key"];
+
+function PostThumb({
+  post,
+  colIndex,
+  onPress,
+}: {
+  post: Post;
+  colIndex: number;
+  onPress: (p: Post) => void;
+}) {
+  // Every 7th post is a tall cell (2x height) — creates masonry feel
+  const isWide = (colIndex % 7 === 0) && colIndex > 0;
+  const h = isWide ? COL_W * 1.75 : COL_W;
+
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(post)}
+      activeOpacity={0.88}
+      style={{ width: COL_W, height: h, overflow: "hidden" }}
+    >
+      <Image source={post.image} style={{ width: COL_W, height: h }} contentFit="cover" />
+      {post.video && (
+        <View style={styles.vidBadge}>
+          <Feather name="video" size={11} color="#fff" />
+        </View>
+      )}
+      {post.likedBy.length >= 10 && (
+        <View style={styles.popularBadge}>
+          <Feather name="heart" size={10} color="#fff" />
+          <Text style={[styles.popularText, { fontFamily: "Inter_600SemiBold" }]}>
+            {post.likedBy.length >= 100
+              ? `${Math.round(post.likedBy.length / 100) / 10}K`
+              : String(post.likedBy.length)}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+export default function ExploreScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { user } = useApp();
-  const { courses, contests, employees, posts, getCourseProgress } = useData();
+  const { posts, employees } = useData();
   const { onScroll } = useTabBar();
 
-  const greeting = useMemo(() => {
-    const h = new Date().getHours();
-    if (h < 5) return "Поздний час";
-    if (h < 12) return "Доброе утро";
-    if (h < 18) return "Добрый день";
-    return "Добрый вечер";
-  }, []);
+  const [query, setQuery] = useState("");
+  const [cat, setCat] = useState<Cat>("all");
+  const [focused, setFocused] = useState(false);
+  const [openPost, setOpenPost] = useState<Post | null>(null);
 
-  const inProgressCourse = useMemo(() => {
-    return (
-      courses.find((c) => {
-        const p = getCourseProgress(c.id);
-        return p.completed.length > 0 && p.ratio < 1;
-      }) ?? courses.find((c) => getCourseProgress(c.id).ratio < 1) ?? courses[0]
-    );
-  }, [courses, getCourseProgress]);
+  const filtered = useMemo(() => {
+    let base = cat === "all" ? posts : posts.filter((p) => p.category === cat);
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      base = base.filter(
+        (p) =>
+          p.caption.toLowerCase().includes(q) ||
+          p.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return base;
+  }, [posts, cat, query]);
 
-  const nextContest = useMemo(() => {
-    return [...contests].sort((a, b) => a.endsAt - b.endsAt)[0];
-  }, [contests]);
+  // Top creators sorted by likes on their posts
+  const topCreators = useMemo(() => {
+    return employees
+      .map((e) => ({
+        ...e,
+        totalLikes: posts
+          .filter((p) => p.authorId === e.id)
+          .reduce((sum, p) => sum + p.likedBy.length, 0),
+      }))
+      .sort((a, b) => b.totalLikes - a.totalLikes)
+      .slice(0, 8);
+  }, [employees, posts]);
 
-  const topFive = useMemo(
-    () => [...employees].sort((a, b) => b.points - a.points).slice(0, 5),
-    [employees]
-  );
-
-  const stories = useMemo(
-    () => [
-      { id: "you", name: "Вы", initials: user?.initials ?? "M", isYou: true },
-      ...employees.slice(0, 8).map((e) => ({ id: e.id, name: e.name.split(" ")[0], initials: e.initials, isYou: false })),
-    ],
-    [employees, user]
-  );
-
-  const recentPosts = posts.slice(0, 2);
-  const isManager = user?.role !== "employee";
-
-  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 12);
+  const headerPad = insets.top + (Platform.OS === "web" ? 56 : 8);
   const bottomPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
   const handleScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
     onScroll(e.nativeEvent.contentOffset.y);
   }, [onScroll]);
 
+  // Build grid items: interleave a "creators row" after first 9 posts
+  const gridRows = useMemo(() => {
+    const rows: ("creators" | Post)[][] = [];
+    let col = 0;
+    let row: ("creators" | Post)[] = [];
+    let insertedCreators = false;
+
+    for (let i = 0; i < filtered.length; i++) {
+      if (!insertedCreators && i === 9) {
+        // flush current row first
+        if (row.length > 0) { rows.push(row); row = []; col = 0; }
+        rows.push(["creators"]);
+        insertedCreators = true;
+      }
+      row.push(filtered[i]);
+      col++;
+      if (col === 3) { rows.push(row); row = []; col = 0; }
+    }
+    if (row.length > 0) rows.push(row);
+    return rows;
+  }, [filtered]);
+
   return (
     <FocusFadeView style={{ flex: 1 }}>
       <LiquidBg />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: bottomPad }}
+
+      {/* ── Search bar ──────────────────────────────────── */}
+      <View style={[styles.searchWrap, { paddingTop: headerPad, backgroundColor: "rgba(248,243,236,0.90)" }]}>
+        <View style={[styles.searchBar, { backgroundColor: "rgba(255,255,255,0.72)", borderColor: "rgba(200,160,100,0.35)" }]}>
+          <Feather name="search" size={16} color={colors.mutedForeground} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
+            placeholder="Поиск работ, мастеров, тегов…"
+            placeholderTextColor={colors.mutedForeground}
+            value={query}
+            onChangeText={setQuery}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            returnKeyType="search"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery("")} hitSlop={8}>
+              <Feather name="x" size={15} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* ── Category chips ──────────────────────────────── */}
+      <View style={[styles.chipsBg, { backgroundColor: "rgba(248,243,236,0.90)" }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
+          {CATEGORIES.map((c) => (
+            <TouchableOpacity
+              key={c.key}
+              onPress={() => setCat(c.key)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: cat === c.key ? "#C8A064" : "rgba(255,255,255,0.70)",
+                  borderColor: cat === c.key ? "#C8A064" : "rgba(200,160,100,0.35)",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  {
+                    color: cat === c.key ? "#fff" : colors.foreground,
+                    fontFamily: cat === c.key ? "Inter_600SemiBold" : "Inter_400Regular",
+                  },
+                ]}
+              >
+                {c.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* ── Grid ────────────────────────────────────────── */}
+      <FlatList
+        data={gridRows}
+        keyExtractor={(_, i) => String(i)}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
-      >
-        {/* Header */}
-        <View style={[styles.topBar, { paddingTop: headerPad }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.greeting, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
-              {greeting},{"\n"}{user?.name?.split(" ")[0] ?? ""}!
+        contentContainerStyle={{ paddingBottom: bottomPad }}
+        renderItem={({ item: row, index: rowIdx }) => {
+          if (row[0] === "creators") {
+            return (
+              <View style={styles.creatorsSection}>
+                <View style={styles.creatorsHead}>
+                  <Text style={[styles.creatorsTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+                    Топ-мастера
+                  </Text>
+                  <Feather name="award" size={14} color="#C8A064" />
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.creatorsRow}>
+                  {topCreators.map((e) => (
+                    <TouchableOpacity key={e.id} style={styles.creatorItem}>
+                      <LinearGradient
+                        colors={["#C8A064", "#8B5E3C"]}
+                        style={styles.creatorRing}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      >
+                        <View style={[styles.creatorInner, { backgroundColor: "rgba(248,243,236,0.95)" }]}>
+                          <Avatar initials={e.initials} size={44} />
+                        </View>
+                      </LinearGradient>
+                      <Text numberOfLines={1} style={[styles.creatorName, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
+                        {e.name.split(" ")[0]}
+                      </Text>
+                      <Text style={[styles.creatorLikes, { color: "#C8A064", fontFamily: "Inter_400Regular" }]}>
+                        ❤️ {e.totalLikes}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            );
+          }
+
+          let globalIdx = 0;
+          for (let r = 0; r < rowIdx; r++) {
+            if (gridRows[r][0] !== "creators") globalIdx += gridRows[r].length;
+          }
+
+          return (
+            <View style={styles.gridRow}>
+              {(row as Post[]).map((p, ci) => (
+                <PostThumb
+                  key={p.id}
+                  post={p}
+                  colIndex={globalIdx + ci}
+                  onPress={setOpenPost}
+                />
+              ))}
+              {/* fill empty cells in last row */}
+              {row.length < 3 &&
+                Array.from({ length: 3 - row.length }).map((_, i) => (
+                  <View key={`empty-${i}`} style={{ width: COL_W, height: COL_W }} />
+                ))}
+            </View>
+          );
+        }}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Feather name="search" size={40} color={colors.mutedForeground} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+              Ничего не найдено
             </Text>
-            <Text style={[styles.sub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-              Сегодня отличный день, чтобы стать лучше
+            <Text style={[styles.emptyText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              Попробуйте другой запрос или фильтр
             </Text>
           </View>
-          <PressableScale onPress={() => router.push("/(tabs)/profile")} scaleTo={0.94}>
-            <Avatar initials={user?.initials ?? "M"} size={48} variant="gold" />
-          </PressableScale>
-        </View>
+        }
+      />
 
-        {/* Stories */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storiesRow}>
-          {stories.map((s) => (
-            <View key={s.id} style={styles.storyItem}>
-              <LinearGradient
-                colors={[colors.pink, colors.purple]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.storyRing}
-              >
-                <View style={[styles.storyInner, { backgroundColor: "rgba(248,243,236,0.9)" }]}>
-                  <Avatar initials={s.initials} size={54} />
-                </View>
-              </LinearGradient>
-              <Text numberOfLines={1} style={[styles.storyName, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                {s.name}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Level card */}
-        <GlassCard style={{ marginHorizontal: 20, marginTop: 4 }} borderRadius={24}>
-          <LevelBar points={user?.points ?? 0} />
-        </GlassCard>
-
-        {/* Action tiles */}
-        <View style={styles.actionRow}>
-          <ActionTile icon="zap" label="AI ассистент" subtitle="Скрипты" onPress={() => router.push("/ai")} gradient />
-          <ActionTile icon="award" label="Конкурсы" subtitle={`${contests.length} активных`} onPress={() => router.push("/contests")} />
-          <ActionTile icon="plus" label="Публикация" subtitle="Поделиться" onPress={() => router.push("/post/new")} />
-        </View>
-
-        <SectionHeader eyebrow="Сегодня" title="Что важно" />
-
-        <View style={{ paddingHorizontal: 20, gap: 12 }}>
-          {inProgressCourse ? (
-            <GlassCard
-              onPress={() => router.push({ pathname: "/course/[id]", params: { id: inProgressCourse.id } })}
-              innerStyle={styles.todayInner}
-              borderRadius={22}
-            >
-              <View style={{ flex: 1, gap: 6 }}>
-                <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Развитие</Text>
-                <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                  {inProgressCourse.title}
-                </Text>
-                <Text style={[styles.cardSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                  {Math.round(getCourseProgress(inProgressCourse.id).ratio * 100)}% завершено · {inProgressCourse.lessons.length} уроков
-                </Text>
-              </View>
-              <View style={[styles.arrowCircle, { backgroundColor: "rgba(200,160,100,0.18)", borderColor: "rgba(200,160,100,0.35)" }]}>
-                <Feather name="arrow-up-right" size={18} color={colors.pink} />
-              </View>
-            </GlassCard>
-          ) : null}
-
-          {nextContest ? (
-            <PressableScale onPress={() => router.push({ pathname: "/contests/[id]", params: { id: nextContest.id } })} scaleTo={0.99}>
-              <LinearGradient
-                colors={[colors.pink, colors.purple]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.contestCard]}
-              >
-                <View style={{ flex: 1, gap: 6 }}>
-                  <Text style={[styles.eyebrow, { color: "#FFFFFF", opacity: 0.85, fontFamily: "Inter_500Medium" }]}>Конкурс недели</Text>
-                  <Text style={[styles.cardTitle, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>{nextContest.title}</Text>
-                  <Text style={[styles.cardSub, { color: "#FFFFFF", opacity: 0.85, fontFamily: "Inter_400Regular" }]}>
-                    {Math.max(0, Math.ceil((nextContest.endsAt - Date.now()) / 86_400_000))} дн. · {nextContest.participants.length} участников
-                  </Text>
-                </View>
-                <View style={[styles.arrowCircle, { backgroundColor: "rgba(255,255,255,0.22)", borderColor: "transparent" }]}>
-                  <Feather name="arrow-up-right" size={18} color="#FFFFFF" />
-                </View>
-              </LinearGradient>
-            </PressableScale>
-          ) : null}
-
-          {isManager ? (
-            <GlassCard onPress={() => router.push("/analytics")} innerStyle={styles.todayInner} borderRadius={22}>
-              <View style={{ flex: 1, gap: 6 }}>
-                <Text style={[styles.eyebrow, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>Аналитика</Text>
-                <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                  APIA · {employees.length} мастеров
-                </Text>
-                <Text style={[styles.cardSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                  Активность, обучение, рейтинг
-                </Text>
-              </View>
-              <View style={[styles.arrowCircle, { backgroundColor: "rgba(200,160,100,0.18)", borderColor: "rgba(200,160,100,0.35)" }]}>
-                <Feather name="bar-chart-2" size={18} color={colors.pink} />
-              </View>
-            </GlassCard>
-          ) : null}
-        </View>
-
-        <SectionHeader
-          eyebrow="Лучшие на неделе"
-          title="Рейтинг мастеров"
-          action={{ label: "Все", onPress: () => router.push("/(tabs)/profile") }}
-        />
-        <View style={{ paddingHorizontal: 20, gap: 8 }}>
-          {topFive.map((emp, i) => (
-            <GlassCard key={emp.id} borderRadius={18} innerStyle={styles.rankInner}>
-              <View style={[styles.rankBadge, i === 0 ? { backgroundColor: colors.pink } : { backgroundColor: "rgba(200,160,100,0.15)" }]}>
-                <Text style={[styles.rankNum, { color: i === 0 ? "#FFFFFF" : colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                  {i + 1}
-                </Text>
-              </View>
-              <Avatar initials={emp.initials} size={38} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rankName, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{emp.name}</Text>
-                <Text style={[styles.rankSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>{emp.specialty}</Text>
-              </View>
-              <Text style={[styles.rankPts, { color: colors.pink, fontFamily: "Inter_600SemiBold" }]}>
-                {emp.points.toLocaleString("ru-RU")}
-              </Text>
-            </GlassCard>
-          ))}
-        </View>
-
-        <SectionHeader
-          eyebrow="Лента"
-          title="Свежие работы"
-          action={{ label: "Все", onPress: () => router.push("/(tabs)/feed") }}
-        />
-        <View style={{ paddingHorizontal: 20, gap: 10 }}>
-          {recentPosts.map((p) => (
-            <GlassCard
-              key={p.id}
-              onPress={() => router.push({ pathname: "/post/[id]", params: { id: p.id } })}
-              borderRadius={20}
-              innerStyle={styles.feedInner}
-            >
-              <Avatar
-                initials={employees.find((e) => e.id === p.authorId)?.initials ?? user?.initials ?? "M"}
-                size={42}
-              />
-              <View style={{ flex: 1 }}>
-                <Text numberOfLines={2} style={[styles.feedText, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
-                  {p.caption}
-                </Text>
-                <Text style={[styles.feedMeta, { color: colors.pink, fontFamily: "Inter_500Medium" }]}>
-                  {p.likedBy.length} ♡ · {p.comments.length} комментариев
-                </Text>
-              </View>
-            </GlassCard>
-          ))}
-        </View>
-      </ScrollView>
+      {/* Post detail / comments */}
+      <CommentsSheet post={openPost} visible={!!openPost} onClose={() => setOpenPost(null)} />
     </FocusFadeView>
   );
 }
 
-function ActionTile({
-  icon, label, subtitle, onPress, gradient,
-}: {
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  subtitle: string;
-  onPress: () => void;
-  gradient?: boolean;
-}) {
-  const colors = useColors();
-
-  if (gradient) {
-    return (
-      <PressableScale onPress={onPress} scaleTo={0.95} style={{ flex: 1 }}>
-        <LinearGradient
-          colors={[colors.pink, colors.purple]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.tile}
-        >
-          <Feather name={icon} size={20} color="#FFFFFF" />
-          <Text numberOfLines={1} style={[styles.tileLabel, { color: "#FFFFFF", fontFamily: "Inter_600SemiBold" }]}>{label}</Text>
-          <Text numberOfLines={1} style={[styles.tileSub, { color: "#FFFFFF", fontFamily: "Inter_400Regular", opacity: 0.85 }]}>{subtitle}</Text>
-        </LinearGradient>
-      </PressableScale>
-    );
-  }
-
-  return (
-    <GlassCard onPress={onPress} scaleTo={0.95} style={{ flex: 1 }} innerStyle={styles.tile} borderRadius={20}>
-      <Feather name={icon} size={20} color={colors.pink} />
-      <Text numberOfLines={1} style={[styles.tileLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{label}</Text>
-      <Text numberOfLines={1} style={[styles.tileSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>{subtitle}</Text>
-    </GlassCard>
-  );
-}
-
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 18, gap: 12 },
-  greeting: { fontSize: 32, letterSpacing: -0.9, lineHeight: 38 },
-  sub: { fontSize: 13, marginTop: 8, letterSpacing: 0.2, opacity: 0.72 },
-  storiesRow: { gap: 14, paddingHorizontal: 20, paddingVertical: 14 },
-  storyItem: { alignItems: "center", gap: 6, width: 70 },
-  storyRing: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", padding: 2.5 },
-  storyInner: { flex: 1, alignSelf: "stretch", borderRadius: 30, alignItems: "center", justifyContent: "center" },
-  storyName: { fontSize: 11, letterSpacing: 0.1 },
-  actionRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, paddingTop: 16 },
-  tile: { paddingVertical: 20, paddingHorizontal: 14, borderRadius: 20, gap: 10, minHeight: 116 },
-  tileLabel: { fontSize: 13, letterSpacing: -0.1 },
-  tileSub: { fontSize: 11, letterSpacing: 0.2 },
-  todayInner: { flexDirection: "row", alignItems: "center", padding: 18, gap: 12 },
-  contestCard: { flexDirection: "row", alignItems: "center", padding: 18, borderRadius: 22, gap: 12 },
-  eyebrow: { fontSize: 12, letterSpacing: 0.1 },
-  cardTitle: { fontSize: 17, letterSpacing: -0.4 },
-  cardSub: { fontSize: 12, letterSpacing: 0.1 },
-  arrowCircle: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  rankInner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12 },
-  rankBadge: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  rankNum: { fontSize: 13, letterSpacing: 0.1 },
-  rankName: { fontSize: 14, letterSpacing: 0.1 },
-  rankSub: { fontSize: 11, letterSpacing: 0.1, marginTop: 2 },
-  rankPts: { fontSize: 14, letterSpacing: 0.1 },
-  feedInner: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
-  feedText: { fontSize: 13, lineHeight: 18 },
-  feedMeta: { fontSize: 11, letterSpacing: 0.1, marginTop: 6 },
+  searchWrap: {
+    paddingHorizontal: 14, paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(200,160,100,0.20)",
+  },
+  searchBar: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1,
+  },
+  searchInput: { flex: 1, fontSize: 14, paddingVertical: 0 },
+  chipsBg: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(200,160,100,0.15)",
+  },
+  chipsRow: { gap: 8, paddingHorizontal: 14, paddingVertical: 10 },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 20, borderWidth: 1,
+  },
+  chipText: { fontSize: 13 },
+  gridRow: {
+    flexDirection: "row",
+    gap: COL_GAP,
+    marginBottom: COL_GAP,
+  },
+  vidBadge: {
+    position: "absolute", top: 6, right: 6,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: 4, padding: 3,
+  },
+  popularBadge: {
+    position: "absolute", bottom: 6, left: 6,
+    flexDirection: "row", alignItems: "center", gap: 3,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3,
+  },
+  popularText: { color: "#fff", fontSize: 10 },
+  creatorsSection: {
+    paddingVertical: 16,
+    backgroundColor: "rgba(248,243,236,0.70)",
+  },
+  creatorsHead: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 14, marginBottom: 12,
+  },
+  creatorsTitle: { fontSize: 16, letterSpacing: -0.3 },
+  creatorsRow: { gap: 16, paddingHorizontal: 14 },
+  creatorItem: { alignItems: "center", gap: 5, width: 62 },
+  creatorRing: {
+    width: 58, height: 58, borderRadius: 29,
+    alignItems: "center", justifyContent: "center", padding: 2.5,
+  },
+  creatorInner: {
+    width: 51, height: 51, borderRadius: 26,
+    alignItems: "center", justifyContent: "center",
+  },
+  creatorName: { fontSize: 11, textAlign: "center" },
+  creatorLikes: { fontSize: 10 },
+  empty: { alignItems: "center", paddingVertical: 60, gap: 12 },
+  emptyTitle: { fontSize: 16 },
+  emptyText: { fontSize: 14 },
 });

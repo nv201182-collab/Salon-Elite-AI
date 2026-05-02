@@ -31,11 +31,11 @@ import { useColors } from "@/hooks/useColors";
 
 /* ─── Tab definitions ──────────────────────────────────────── */
 const TABS = [
-  { name: "feed",    route: "/(tabs)/feed",    label: "Лента",    icon: "image"          as const },
-  { name: "index",   route: "/(tabs)/",        label: "Главная",  icon: "home"           as const },
-  { name: "learn",   route: "/(tabs)/learn",   label: "Развитие", icon: "book-open"      as const },
-  { name: "chat",    route: "/(tabs)/chat",    label: "Чаты",     icon: "message-circle" as const },
-  { name: "profile", route: "/(tabs)/profile", label: "Профиль",  icon: "user"           as const },
+  { name: "feed",    route: "/(tabs)/feed",    label: "Лента",   icon: "home"           as const },
+  { name: "index",   route: "/(tabs)/",        label: "Поиск",   icon: "search"         as const },
+  { name: "learn",   route: "/(tabs)/learn",   label: "Курсы",   icon: "book-open"      as const },
+  { name: "chat",    route: "/(tabs)/chat",    label: "Чаты",    icon: "message-circle" as const },
+  { name: "profile", route: "/(tabs)/profile", label: "Профиль", icon: "user"           as const },
 ];
 const TAB_COUNT = TABS.length;
 

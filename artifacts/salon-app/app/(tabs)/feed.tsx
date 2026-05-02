@@ -39,11 +39,15 @@ export default function FeedScreen() {
   const router = useRouter();
   const { user, myStories, myReactions, toggleReaction, deleteStory } = useApp();
   const { posts, trends, employees } = useData();
+  const [feedTab, setFeedTab] = useState<"foryou" | "following">("foryou");
   const [filter, setFilter] = useState<Post["category"] | "all">("all");
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [storyViewerIdx, setStoryViewerIdx] = useState<number | null>(null);
   const [viewedStories, setViewedStories] = useState<Set<string>>(new Set());
   const [notifCount] = useState(3);
+
+  // "Подписки" — simulate a subset of employees the user follows
+  const followingIds = useMemo(() => new Set(employees.slice(0, 6).map((e) => e.id)), [employees]);
 
   const handleStoryViewed = useCallback((id: string) => {
     setViewedStories((prev) => {
@@ -62,10 +66,12 @@ export default function FeedScreen() {
     }
   ).current;
 
-  const filtered = useMemo(
-    () => (filter === "all" ? posts : posts.filter((p) => p.category === filter)),
-    [posts, filter]
-  );
+  const filtered = useMemo(() => {
+    let base = feedTab === "following"
+      ? posts.filter((p) => followingIds.has(p.authorId) || p.authorId === "u_self")
+      : posts;
+    return filter === "all" ? base : base.filter((p) => p.category === filter);
+  }, [posts, filter, feedTab, followingIds]);
 
   const stories = useMemo<StoryItem[]>(() => {
     const empStories: StoryItem[] = employees.slice(0, 14).map((e) => {
@@ -165,6 +171,32 @@ export default function FeedScreen() {
                   <Feather name="plus" size={20} color="#FFFFFF" />
                 </LinearGradient>
               </PressableScale>
+            </View>
+
+            {/* ── For You / Following tab switch ──────────── */}
+            <View style={[styles.feedTabRow, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.feedTabBtn, feedTab === "foryou" && { borderBottomWidth: 2, borderBottomColor: colors.foreground }]}
+                onPress={() => setFeedTab("foryou")}
+              >
+                <Text style={[styles.feedTabText, {
+                  color: feedTab === "foryou" ? colors.foreground : colors.mutedForeground,
+                  fontFamily: feedTab === "foryou" ? "Inter_600SemiBold" : "Inter_400Regular",
+                }]}>
+                  Для вас
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.feedTabBtn, feedTab === "following" && { borderBottomWidth: 2, borderBottomColor: colors.foreground }]}
+                onPress={() => setFeedTab("following")}
+              >
+                <Text style={[styles.feedTabText, {
+                  color: feedTab === "following" ? colors.foreground : colors.mutedForeground,
+                  fontFamily: feedTab === "following" ? "Inter_600SemiBold" : "Inter_400Regular",
+                }]}>
+                  Подписки
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* ── Stories ──────────────────────────────────── */}
@@ -343,6 +375,15 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19,
     alignItems: "center", justifyContent: "center",
   },
+  feedTabRow: {
+    flexDirection: "row",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  feedTabBtn: {
+    flex: 1, alignItems: "center", justifyContent: "center",
+    paddingVertical: 10,
+  },
+  feedTabText: { fontSize: 14, letterSpacing: 0.1 },
   divider: { height: StyleSheet.hairlineWidth, marginTop: 4 },
   storiesRow: { gap: 10, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 10 },
   storyItem: { alignItems: "center", gap: 5, width: 66 },
