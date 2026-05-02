@@ -1,6 +1,5 @@
-import { Image } from "expo-image";
 import React, { useEffect } from "react";
-import { StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { StyleSheet, View, type ViewStyle } from "react-native";
 import Animated, {
   Easing,
   cancelAnimation,
@@ -9,48 +8,60 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  useDerivedValue,
 } from "react-native-reanimated";
+import Svg, { Ellipse, Path } from "react-native-svg";
 
-const beeImg = require("../assets/images/bee.png");
+import { ApiaLogo } from "./ApiaLogo";
 
-const GOLD = "#C9A96E";
-const BG = "#FAF8F4";
-const DARK = "#0E1A2B";
+const GOLD = "#B78F4E";
+const DARK = "#3A2A10";
+const WING = "#C9A070";
+const BG   = "#EDE8E1";
+
+function BeeSvgIcon({ size }: { size: number }) {
+  return (
+    <Svg width={size} height={size * 1.4} viewBox="-20 -10 40 70">
+      <Ellipse cx="-14" cy="14" rx="15" ry="9" fill={WING} opacity="0.6" transform="rotate(-28,-14,14)" />
+      <Ellipse cx="14"  cy="14" rx="15" ry="9" fill={WING} opacity="0.6" transform="rotate(28,14,14)"  />
+      <Ellipse cx="-10" cy="24" rx="10" ry="6" fill={WING} opacity="0.4" transform="rotate(-20,-10,24)" />
+      <Ellipse cx="10"  cy="24" rx="10" ry="6" fill={WING} opacity="0.4" transform="rotate(20,10,24)"  />
+      <Ellipse cx="0"   cy="38" rx="9"  ry="17" fill={GOLD} />
+      <Path d="M-8,31 Q0,29 8,31"  stroke={DARK} strokeWidth="3" fill="none" />
+      <Path d="M-9,38 Q0,36 9,38"  stroke={DARK} strokeWidth="3" fill="none" />
+      <Path d="M-8,45 Q0,43 8,45"  stroke={DARK} strokeWidth="3" fill="none" />
+      <Ellipse cx="0"  cy="19" rx="8" ry="8" fill={GOLD} />
+      <Path d="M-3,12 Q-12,4 -16,-2" stroke={DARK} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <Path d="M3,12  Q12,4  16,-2"  stroke={DARK} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <Ellipse cx="-16" cy="-2" rx="1.8" ry="1.8" fill={DARK} />
+      <Ellipse cx="16"  cy="-2" rx="1.8" ry="1.8" fill={DARK} />
+    </Svg>
+  );
+}
 
 type Props = {
   size?: number;
   fullscreen?: boolean;
   style?: ViewStyle;
-  /** Прогресс 0–100. Если не задан — автоматически анимируется до 100 */
   progress?: number;
 };
 
-export function BeeLoader({ size = 72, fullscreen = true, style, progress }: Props) {
-  const t = useSharedValue(0);
-  const wing = useSharedValue(0);
+export function BeeLoader({ size = 50, fullscreen = true, style }: Props) {
+  const t     = useSharedValue(0);
+  const wing  = useSharedValue(0);
   const float = useSharedValue(0);
-  const progressAnim = useSharedValue(0);
 
-  // Полёт пчелы
   useEffect(() => {
     t.value = withRepeat(
-      withTiming(1, { duration: 3800, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      false
+      withTiming(1, { duration: 4400, easing: Easing.inOut(Easing.sin) }),
+      -1, false
     );
     wing.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 65 }),
-        withTiming(0, { duration: 65 })
-      ),
-      -1,
-      true
+      withSequence(withTiming(1, { duration: 58 }), withTiming(0, { duration: 58 })),
+      -1, true
     );
     float.value = withRepeat(
-      withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      true
+      withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.sin) }),
+      -1, true
     );
     return () => {
       cancelAnimation(t);
@@ -59,111 +70,31 @@ export function BeeLoader({ size = 72, fullscreen = true, style, progress }: Pro
     };
   }, []);
 
-  // Прогресс
-  useEffect(() => {
-    if (progress !== undefined) {
-      progressAnim.value = withTiming(progress, { duration: 280 });
-    } else {
-      progressAnim.value = withTiming(95, { duration: 2200, easing: Easing.out(Easing.quad) });
-    }
-  }, [progress]);
-
   const beeStyle = useAnimatedStyle(() => {
     "worklet";
     const angle = t.value * Math.PI * 2;
-    const tx = Math.cos(angle) * 84;
-    const ty = Math.sin(angle * 2) * 28 + (float.value - 0.5) * 10;
-    const rotate = `${Math.cos(angle) * 18}deg`;
-    const sc = 0.93 + wing.value * 0.09;
-    return { transform: [{ translateX: tx }, { translateY: ty }, { rotate }, { scale: sc }] };
-  });
-
-  const trail1Style = useAnimatedStyle(() => {
-    "worklet";
-    const angle = t.value * Math.PI * 2;
+    const tx = Math.cos(angle) * 165;
+    const ty = Math.sin(angle) * 52 + (float.value - 0.5) * 14;
+    const rotate = `${Math.cos(angle) * 22}deg`;
+    const sc = 0.92 + wing.value * 0.1;
     return {
-      transform: [
-        { translateX: Math.cos(angle - 0.45) * 84 },
-        { translateY: Math.sin((angle - 0.45) * 2) * 28 },
-      ],
-      opacity: 0.14 + Math.abs(Math.sin(angle * 2)) * 0.2,
+      transform: [{ translateX: tx }, { translateY: ty }, { rotate }, { scale: sc }],
     };
   });
 
-  const trail2Style = useAnimatedStyle(() => {
-    "worklet";
-    const angle = t.value * Math.PI * 2;
-    return {
-      transform: [
-        { translateX: Math.cos(angle - 0.9) * 84 },
-        { translateY: Math.sin((angle - 0.9) * 2) * 28 },
-        { scale: 0.52 },
-      ],
-      opacity: 0.07 + Math.abs(Math.sin(angle * 2)) * 0.12,
-    };
-  });
-
-  const progressBarStyle = useAnimatedStyle(() => {
-    "worklet";
-    return { width: `${Math.min(progressAnim.value, 100)}%` as any };
-  });
-
-  const percentText = useDerivedValue(() => `${Math.round(progressAnim.value)} %`);
-
-  const stageW = size * 3.4;
-  const stageH = size * 1.9;
-
-  const content = (
-    <View style={styles.wrapper}>
-      {/* Логотип */}
-      <View style={styles.logoBlock}>
-        <Text style={styles.logoText}>APIA</Text>
-        <View style={styles.taglineRow}>
-          {["ARCHITECTURE", "PEOPLE", "INTELLIGENCE", "ACTION"].map((w, i) => (
-            <React.Fragment key={w}>
-              {i > 0 && <View style={styles.taglineDot} />}
-              <Text style={styles.taglineWord}>{w}</Text>
-            </React.Fragment>
-          ))}
-        </View>
-      </View>
-
-      {/* Арена полёта */}
-      <View style={{ width: stageW, height: stageH, alignItems: "center", justifyContent: "center" }}>
-        <Animated.View style={[styles.trailCircle, { width: size * 0.72, height: size * 0.72, borderRadius: size * 0.36 }, trail2Style]} />
-        <Animated.View style={[styles.trailCircle, { width: size * 0.86, height: size * 0.86, borderRadius: size * 0.43 }, trail1Style]} />
-        <Animated.View style={beeStyle}>
-          <View style={[styles.beeBubble, { width: size, height: size, borderRadius: size / 2 }]}>
-            <Image
-              source={beeImg}
-              style={{ width: size * 0.76, height: size * 0.76, borderRadius: (size * 0.76) / 2 }}
-              contentFit="cover"
-            />
-          </View>
-        </Animated.View>
-      </View>
-
-      {/* Прогресс */}
-      <View style={styles.progressBlock}>
-        <View style={styles.progressTrack}>
-          <Animated.View style={[styles.progressFill, progressBarStyle]} />
-        </View>
-        <Animated.Text style={styles.percentLabel}>
-          {percentText.value}
-        </Animated.Text>
-      </View>
+  const inner = (
+    <View style={styles.inner}>
+      <ApiaLogo width={300} />
+      <Animated.View style={[styles.bee, beeStyle]} pointerEvents="none">
+        <BeeSvgIcon size={size} />
+      </Animated.View>
     </View>
   );
 
   if (!fullscreen) {
-    return <View style={[{ alignItems: "center", justifyContent: "center" }, style]}>{content}</View>;
+    return <View style={[{ alignItems: "center", justifyContent: "center" }, style]}>{inner}</View>;
   }
-
-  return (
-    <View style={[styles.screen, style]}>
-      {content}
-    </View>
-  );
+  return <View style={[styles.screen, style]}>{inner}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -173,76 +104,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  wrapper: {
-    alignItems: "center",
-    gap: 0,
-  },
-  // Логотип
-  logoBlock: {
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  logoText: {
-    fontSize: 62,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 20,
-    color: DARK,
-  },
-  taglineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  taglineWord: {
-    fontSize: 8.5,
-    letterSpacing: 1.1,
-    fontFamily: "Inter_500Medium",
-    color: GOLD,
-  },
-  taglineDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: GOLD,
-  },
-  // Пчела
-  trailCircle: {
-    position: "absolute",
-    backgroundColor: GOLD + "1A",
-  },
-  beeBubble: {
-    backgroundColor: "#FFFFFF",
+  inner: {
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: GOLD,
-    shadowOpacity: 0.38,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
   },
-  // Прогресс
-  progressBlock: {
-    alignItems: "center",
-    gap: 10,
-    marginTop: 8,
-  },
-  progressTrack: {
-    width: 210,
-    height: 1.5,
-    borderRadius: 1,
-    backgroundColor: GOLD + "33",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: GOLD,
-    borderRadius: 1,
-  },
-  percentLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    letterSpacing: 2.5,
-    color: GOLD,
+  bee: {
+    position: "absolute",
   },
 });

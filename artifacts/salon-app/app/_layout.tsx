@@ -109,21 +109,14 @@ export default function RootLayout() {
     Inter_700Bold,
   });
   const [timedOut, setTimedOut] = useState(false);
-  const [loadProgress, setLoadProgress] = useState(0);
 
   useEffect(() => {
-    // Плавный прогресс: 0→60% за 600ms, 60→90% ещё 400ms, финал при готовности шрифтов
-    const t1 = setTimeout(() => setLoadProgress(60), 600);
-    const t2 = setTimeout(() => setLoadProgress(85), 1000);
-    const t3 = setTimeout(() => setTimedOut(true), 1400);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t = setTimeout(() => setTimedOut(true), 1200);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      setLoadProgress(100);
-      setTimeout(() => SplashScreen.hideAsync(), 300);
-    } else if (timedOut) {
+    if (fontsLoaded || fontError || timedOut) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError, timedOut]);
@@ -131,7 +124,7 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError && !timedOut) {
     return (
       <SafeAreaProvider>
-        <BeeLoader progress={loadProgress} />
+        <BeeLoader />
       </SafeAreaProvider>
     );
   }
