@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
 import { Chip } from "@/components/Chip";
+import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { EmptyState } from "@/components/EmptyState";
 import { FocusFadeView } from "@/components/FocusFadeView";
 import { LiquidBg } from "@/components/LiquidBg";
@@ -45,6 +46,7 @@ export default function FeedScreen() {
   const [storyViewerIdx, setStoryViewerIdx] = useState<number | null>(null);
   const [viewedStories, setViewedStories] = useState<Set<string>>(new Set());
   const [notifCount] = useState(3);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   // "Подписки" — simulate a subset of employees the user follows
   const followingIds = useMemo(() => new Set(employees.slice(0, 6).map((e) => e.id)), [employees]);
@@ -149,7 +151,7 @@ export default function FeedScreen() {
               </TouchableOpacity>
 
               {/* Notifications bell with badge */}
-              <TouchableOpacity style={styles.iconBtn}>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setNotifOpen(true)}>
                 <Feather name="bell" size={22} color={colors.foreground} />
                 {notifCount > 0 && (
                   <View style={[styles.badge, { backgroundColor: "#FF3B6F" }]}>
@@ -329,6 +331,9 @@ export default function FeedScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      {/* ── Notifications ────────────────────────────────── */}
+      <NotificationsSheet visible={notifOpen} onClose={() => setNotifOpen(false)} />
 
       {/* ── Story Viewer ─────────────────────────────────── */}
       <StoryViewer

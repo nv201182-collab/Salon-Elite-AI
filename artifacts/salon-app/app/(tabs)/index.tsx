@@ -49,24 +49,18 @@ type Cat = typeof CATEGORIES[number]["key"];
 
 function PostThumb({
   post,
-  colIndex,
   onPress,
 }: {
   post: Post;
-  colIndex: number;
   onPress: (p: Post) => void;
 }) {
-  // Every 7th post is a tall cell (2x height) — creates masonry feel
-  const isWide = (colIndex % 7 === 0) && colIndex > 0;
-  const h = isWide ? COL_W * 1.75 : COL_W;
-
   return (
     <TouchableOpacity
       onPress={() => onPress(post)}
       activeOpacity={0.88}
-      style={{ width: COL_W, height: h, overflow: "hidden" }}
+      style={{ width: COL_W, height: COL_W, overflow: "hidden" }}
     >
-      <Image source={post.image} style={{ width: COL_W, height: h }} contentFit="cover" />
+      <Image source={post.image} style={{ width: COL_W, height: COL_W }} contentFit="cover" />
       {post.video && (
         <View style={styles.vidBadge}>
           <Feather name="video" size={11} color="#fff" />
@@ -258,18 +252,12 @@ export default function ExploreScreen() {
             );
           }
 
-          let globalIdx = 0;
-          for (let r = 0; r < rowIdx; r++) {
-            if (gridRows[r][0] !== "creators") globalIdx += gridRows[r].length;
-          }
-
           return (
             <View style={styles.gridRow}>
-              {(row as Post[]).map((p, ci) => (
+              {(row as Post[]).map((p) => (
                 <PostThumb
                   key={p.id}
                   post={p}
-                  colIndex={globalIdx + ci}
                   onPress={setOpenPost}
                 />
               ))}
