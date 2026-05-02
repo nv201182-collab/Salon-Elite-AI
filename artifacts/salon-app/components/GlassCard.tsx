@@ -26,7 +26,7 @@ function GlassLayer({ borderRadius }: { borderRadius: number }) {
   if (Platform.OS === "web") {
     return (
       <View
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(250,246,240,0.82)" }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(255,255,255,0.85)" }]}
       />
     );
   }
@@ -88,13 +88,13 @@ export function GlassCard({
 
 const styles = StyleSheet.create({
   shadow: {
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(255,255,255,0.80)",
-    shadowColor: "#6B5030",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.13,
-    shadowRadius: 28,
-    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 3,
   },
   inner: {
     overflow: "hidden",
