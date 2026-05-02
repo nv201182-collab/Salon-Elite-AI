@@ -18,7 +18,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd artifacts/salon-app && node server/serve.js"
+args = "cd artifacts/salon-app && PORT=8081 node server/serve.js"
 waitForPort = 8081
 
 [agent]
