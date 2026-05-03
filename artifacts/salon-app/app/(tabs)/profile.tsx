@@ -315,7 +315,7 @@ export default function ProfileScreen() {
             {ROLE_OPTIONS.map((r) => (
               <TouchableOpacity
                 key={r.value}
-                onPress={() => setRole(r.value)}
+                onPress={() => { if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); setRole(r.value); }}
                 style={[
                   styles.roleChip,
                   {

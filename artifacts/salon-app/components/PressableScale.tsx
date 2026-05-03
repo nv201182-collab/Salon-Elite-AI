@@ -33,7 +33,7 @@ export function PressableScale({ children, haptic = true, style, scaleTo = 0.97,
 
   const handlePress = (e: Parameters<NonNullable<PressableProps["onPress"]>>[0]) => {
     if (haptic && Platform.OS !== "web") {
-      Haptics.selectionAsync().catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
     onPress?.(e);
   };
