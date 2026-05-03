@@ -38,6 +38,19 @@ const MIME_TYPES = {
   ".map": "application/json",
 };
 
+const SRC_VERSION_PATH  = path.resolve(__dirname, "..", "src-version.txt");
+const BUILD_VERSION_PATH = path.resolve(STATIC_ROOT, "src-version.txt");
+
+function readVersion(filePath) {
+  try { return fs.readFileSync(filePath, "utf-8").trim(); } catch { return null; }
+}
+
+function isUpToDate() {
+  const srcV   = readVersion(SRC_VERSION_PATH);
+  const buildV = readVersion(BUILD_VERSION_PATH);
+  return srcV && buildV && srcV === buildV;
+}
+
 // Build state machine
 let buildState = "unknown"; // "unknown" | "building" | "ready" | "error"
 
@@ -51,7 +64,7 @@ function isBuilt() {
 function triggerBuild() {
   if (buildState === "building") return;
   buildState = "building";
-  console.log("[serve] static-build missing — starting build automatically...");
+  console.log("[serve] Starting build...");
 
   const build = spawn("node", [BUILD_SCRIPT], {
     cwd: path.resolve(__dirname, ".."),
@@ -61,6 +74,11 @@ function triggerBuild() {
 
   build.on("close", (code) => {
     if (code === 0) {
+      // Copy src-version into static-build so next startup skips rebuild
+      try {
+        const v = readVersion(SRC_VERSION_PATH);
+        if (v) fs.writeFileSync(BUILD_VERSION_PATH, v + "\n");
+      } catch {}
       buildState = "ready";
       console.log("[serve] Build complete. Serving.");
     } else {
@@ -75,10 +93,13 @@ function triggerBuild() {
   });
 }
 
-// Check on startup
-if (isBuilt()) {
+// Check on startup — rebuild if source version changed since last build
+if (isBuilt() && isUpToDate()) {
   buildState = "ready";
-  console.log("[serve] static-build found. Ready.");
+  console.log("[serve] static-build is up to date. Ready.");
+} else if (isBuilt()) {
+  console.log("[serve] Source changed since last build — rebuilding...");
+  triggerBuild();
 } else {
   triggerBuild();
 }
