@@ -13,24 +13,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { spawn, exec } = require("child_process");
-
-// ─── Auto-sync from GitHub (non-blocking, runs in background) ──
-(function autoSync() {
-  const repoRoot = path.resolve(__dirname, "..", "..", "..");
-  const dbPath = path.join(repoRoot, "artifacts", "salon-app", "db.json");
-  const stampPath = path.join(repoRoot, "artifacts", "salon-app", "static-build", "src-version.txt");
-
-  let dbBackup = null;
-  try { dbBackup = fs.readFileSync(dbPath, "utf-8"); } catch {}
-
-  exec("git fetch origin && git reset --hard origin/main", { cwd: repoRoot, timeout: 60000 }, (err) => {
-    if (err) { console.warn("[serve] Git sync skipped:", err.message); return; }
-    if (dbBackup) try { fs.writeFileSync(dbPath, dbBackup); } catch {}
-    try { fs.unlinkSync(stampPath); } catch {}
-    console.log("[serve] Auto-synced with GitHub ✓");
-  });
-})();
+const { spawn } = require("child_process");
 
 const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
 const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
