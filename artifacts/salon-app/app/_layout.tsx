@@ -42,6 +42,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, segments, router]);
 
+  // Блокируем рендер детей пока загружается состояние авторизации
+  if (isLoading) return <BeeLoader />;
+
   return <>{children}</>;
 }
 

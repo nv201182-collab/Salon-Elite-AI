@@ -9,10 +9,10 @@
       "Bash(git log*)",
       "Bash(git diff*)",
       "Bash(git pull*)",
-      "Bash(chmod +x *)",
-      "Bash(plutil *)",
-      "Bash(launchctl load *)",
-      "Bash(launchctl list *)"
+      "Edit(*)",
+      "Write(*)",
+      "Read(*)",
+      "MultiEdit(*)"
     ]
   }
 }
