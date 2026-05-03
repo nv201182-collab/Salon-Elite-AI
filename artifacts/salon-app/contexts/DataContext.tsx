@@ -221,8 +221,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const publishPost = useCallback(
     (image: ImageSrc, caption: string, tags: string[], category: Post["category"], video?: ImageSrc) => {
       if (!user) throw new Error("not authorized");
+      const localId = Date.now().toString(36);
       const post: Post = {
-        id: Date.now().toString(36),
+        id: localId,
         authorId: user.id,
         image,
         caption: caption.trim() || "Новая работа APIA",
@@ -249,7 +250,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                   await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
               }
             }
-            await fetch(`${API_BASE}/api/posts`, {
+            const resp = await fetch(`${API_BASE}/api/posts`, {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
@@ -260,6 +261,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 imageBase64,
               }),
             });
+            if (resp.ok) {
+              const serverPost: Post = await resp.json();
+              // Replace local temporary ID with server ID so other users can sync correctly
+              setState(s => ({
+                ...s,
+                posts: s.posts.map(p => p.id === localId ? { ...p, id: serverPost.id } : p),
+              }));
+            }
           } catch { /* background sync failure is non-critical */ }
         })();
       }
