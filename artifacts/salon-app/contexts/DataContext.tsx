@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
 import React, {
   createContext,
   useCallback,
@@ -7,6 +8,8 @@ import React, {
   useMemo,
   useState,
 } from "react";
+
+const API_BASE = (process.env.EXPO_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 import {
   ACHIEVEMENTS_SEED,
@@ -101,6 +104,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
   }, [state, hydrated]);
 
+  // Fetch posts from shared API and merge into feed
+  useEffect(() => {
+    if (!hydrated || !API_BASE) return;
+    fetch(`${API_BASE}/api/posts`)
+      .then(r => r.ok ? r.json() : [])
+      .then((apiPosts: Post[]) => {
+        if (!apiPosts.length) return;
+        setState(s => {
+          const localIds = new Set(s.posts.map(p => p.id));
+          const newPosts = apiPosts.filter(p => !localIds.has(p.id));
+          if (!newPosts.length) return s;
+          return { ...s, posts: [...newPosts, ...s.posts] };
+        });
+      })
+      .catch(() => {});
+  }, [hydrated]);
+
   const toggleLike = useCallback(
     (postId: string) => {
       if (!user) return;
@@ -117,6 +137,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             : p
         ),
       }));
+      if (API_BASE) {
+        fetch(`${API_BASE}/api/posts/${postId}/like`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        }).catch(() => {});
+      }
     },
     [user]
   );
@@ -137,6 +164,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             : p
         ),
       }));
+      if (API_BASE) {
+        fetch(`${API_BASE}/api/posts/${postId}/save`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        }).catch(() => {});
+      }
     },
     [user]
   );
@@ -183,6 +217,34 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       };
       setState((s) => ({ ...s, posts: [post, ...s.posts] }));
       addPoints(50, "Новая публикация");
+
+      // Sync to shared API in background
+      if (API_BASE) {
+        (async () => {
+          try {
+            let imageBase64: string | undefined;
+            if (typeof image === "object" && "uri" in image && typeof image.uri === "string") {
+              const uri = image.uri;
+              if (uri.startsWith("file://") || uri.startsWith("/var/")) {
+                imageBase64 = "data:image/jpeg;base64," +
+                  await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+              }
+            }
+            await fetch(`${API_BASE}/api/posts`, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                authorId: user.id,
+                caption: post.caption,
+                tags: post.tags,
+                category: post.category,
+                imageBase64,
+              }),
+            });
+          } catch { /* background sync failure is non-critical */ }
+        })();
+      }
+
       return post;
     },
     [user, addPoints]

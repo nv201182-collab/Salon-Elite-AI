@@ -58,7 +58,15 @@ export function PostCard({ post, isActive = false }: Props) {
   const isOwnPost = post.authorId === "u_self" || post.authorId === user?.id;
   const author = isOwnPost
     ? { name: user?.name ?? "Вы", specialty: user?.specialty ?? "", initials: user?.initials ?? "M", avatarUri: user?.avatarUri }
-    : EMPLOYEES_SEED.find((e) => e.id === post.authorId);
+    : EMPLOYEES_SEED.find((e) => e.id === post.authorId)
+      ?? {
+           name:      post.authorId === "u_vlad"  ? "Владислав"
+                    : post.authorId === "u_user2" ? "Антон" : "Мастер",
+           initials:  post.authorId === "u_vlad"  ? "ВЛ"
+                    : post.authorId === "u_user2" ? "АН"   : "МА",
+           specialty: "Мастер APIA",
+           avatarUri: undefined,
+         };
 
   const liked = user ? post.likedBy.includes(user.id) : false;
   const saved = user ? post.savedBy.includes(user.id) : false;

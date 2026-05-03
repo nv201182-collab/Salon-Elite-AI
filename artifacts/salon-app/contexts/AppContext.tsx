@@ -57,6 +57,8 @@ export type StoryEntry = {
   createdAt: number;
 };
 
+export type ApiUser = { id: string; name: string; initials: string; specialty: string; phone?: string };
+
 type Ctx = {
   user: User | null;
   isLoading: boolean;
@@ -68,6 +70,7 @@ type Ctx = {
   myReactions: Record<string, string>;
   toggleReaction: (storyId: string, emoji: string) => void;
   login: (phone: string, name: string) => void;
+  loginWithApiUser: (apiUser: ApiUser) => void;
   logout: () => Promise<void>;
   addPoints: (amount: number, reason?: string) => void;
   setRole: (role: UserRole) => void;
@@ -120,19 +123,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         if (u) {
           setUser(JSON.parse(u));
-        } else {
-          const guestName = "Мастер";
-          setUser({
-            id: "u_self", name: guestName, phone: "",
-            role: "employee", salonId: "salon_msk",
-            specialty: "Парикмахер-стилист",
-            points: 2350, joinedAt: Date.now(),
-            initials: initialsFrom(guestName),
-          });
-          setPointsHistory([
-            { id: "h0", amount: 50, reason: "Добро пожаловать в APIA", at: Date.now() },
-          ]);
         }
+        // No auto-guest: user must log in with phone number
         if (h) setPointsHistory(JSON.parse(h));
       } catch { /* ignore */ }
       if (!cancelled) setIsLoading(false);
@@ -173,6 +165,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       initials: initialsFrom(trimmed),
     });
     setPointsHistory([{ id: "h0", amount: 50, reason: "Регистрация в APIA", at: Date.now() }]);
+  }, []);
+
+  const loginWithApiUser = useCallback((apiUser: ApiUser) => {
+    setUser({
+      id:        apiUser.id,
+      name:      apiUser.name,
+      phone:     apiUser.phone ?? "",
+      role:      "employee",
+      salonId:   "salon_msk",
+      specialty: apiUser.specialty,
+      points:    0,
+      joinedAt:  Date.now(),
+      initials:  apiUser.initials,
+    });
+    setPointsHistory([{ id: "h0", amount: 50, reason: "Добро пожаловать в APIA", at: Date.now() }]);
   }, []);
 
   const logout = useCallback(async () => {
@@ -236,8 +243,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     user, isLoading, pointsHistory,
     myStories, addStory, updateStory, deleteStory,
     myReactions, toggleReaction,
-    login, logout, addPoints, setRole, setAvatarUri,
-  }), [user, isLoading, pointsHistory, myStories, addStory, updateStory, deleteStory, myReactions, toggleReaction, login, logout, addPoints, setRole, setAvatarUri]);
+    login, loginWithApiUser, logout, addPoints, setRole, setAvatarUri,
+  }), [user, isLoading, pointsHistory, myStories, addStory, updateStory, deleteStory, myReactions, toggleReaction, login, loginWithApiUser, logout, addPoints, setRole, setAvatarUri]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

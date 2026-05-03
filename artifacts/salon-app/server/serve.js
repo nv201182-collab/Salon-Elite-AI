@@ -38,6 +38,150 @@ const MIME_TYPES = {
   ".map": "application/json",
 };
 
+// ─── Shared database & API ─────────────────────────────────────
+const UPLOADS_DIR = path.resolve(__dirname, "..", "uploads");
+const DB_PATH     = path.resolve(__dirname, "..", "db.json");
+
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+const API_USERS = [
+  { id: "u_vlad",  phone: "+79855202226", name: "Владислав", initials: "ВЛ", specialty: "Мастер APIA" },
+  { id: "u_user2", phone: "+79639703820", name: "Антон",     initials: "АН", specialty: "Мастер APIA" },
+];
+
+function dbRead() {
+  try   { return JSON.parse(fs.readFileSync(DB_PATH, "utf-8")); }
+  catch { return { posts: [] }; }
+}
+function dbWrite(data) {
+  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+}
+function apiRes(res, status, body) {
+  res.writeHead(status, {
+    "content-type":                "application/json",
+    "access-control-allow-origin": "*",
+    "access-control-allow-headers":"content-type, authorization",
+    "access-control-allow-methods":"GET, POST, OPTIONS",
+  });
+  res.end(JSON.stringify(body));
+}
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", c => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
+    req.on("end", () => {
+      try {
+        const str = Buffer.concat(chunks).toString("utf-8");
+        resolve(str ? JSON.parse(str) : {});
+      } catch { reject(new Error("invalid json")); }
+    });
+    req.on("error", reject);
+  });
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+async function routeApi(pathname, req, res) {
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "access-control-allow-origin": "*",
+      "access-control-allow-headers": "content-type, authorization",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+    });
+    return res.end();
+  }
+
+  // POST /api/auth/login — check phone exists
+  if (pathname === "/api/auth/login" && req.method === "POST") {
+    const { phone = "" } = await readBody(req);
+    const u = API_USERS.find(u => u.phone === phone.replace(/[\s\-()]/g, ""));
+    return u
+      ? apiRes(res, 200, { ok: true })
+      : apiRes(res, 404, { error: "Номер не зарегистрирован в APIA" });
+  }
+
+  // POST /api/auth/verify — mock OTP (any 4-digit code)
+  if (pathname === "/api/auth/verify" && req.method === "POST") {
+    const { phone = "", code = "" } = await readBody(req);
+    const u = API_USERS.find(u => u.phone === phone.replace(/[\s\-()]/g, ""));
+    if (!u) return apiRes(res, 404, { error: "Номер не зарегистрирован" });
+    if (!/^\d{4}$/.test(code)) return apiRes(res, 400, { error: "Код должен быть 4 цифры" });
+    return apiRes(res, 200, { ok: true, user: u });
+  }
+
+  // GET /api/posts
+  if (pathname === "/api/posts" && req.method === "GET") {
+    return apiRes(res, 200, dbRead().posts ?? []);
+  }
+
+  // POST /api/posts
+  if (pathname === "/api/posts" && req.method === "POST") {
+    const body = await readBody(req);
+    const db   = dbRead();
+    const proto = req.headers["x-forwarded-proto"] ?? "https";
+    const host  = req.headers["x-forwarded-host"] ?? req.headers["host"] ?? "localhost";
+
+    let imageUri = null;
+    if (body.imageBase64) {
+      const fname = `${uid()}.jpg`;
+      const data  = body.imageBase64.replace(/^data:[^;]+;base64,/, "");
+      fs.writeFileSync(path.join(UPLOADS_DIR, fname), Buffer.from(data, "base64"));
+      imageUri = `${proto}://${host}/uploads/${fname}`;
+    }
+
+    const post = {
+      id:        uid(),
+      authorId:  body.authorId ?? "unknown",
+      image:     imageUri ? { uri: imageUri } : { uri: `https://picsum.photos/seed/${uid()}/800` },
+      caption:   (body.caption ?? "").trim() || "Работа",
+      tags:      Array.isArray(body.tags) ? body.tags : [],
+      category:  body.category ?? "hair",
+      likedBy:   [],
+      savedBy:   [],
+      comments:  [],
+      createdAt: Date.now(),
+    };
+    db.posts = [post, ...(db.posts ?? [])];
+    dbWrite(db);
+    return apiRes(res, 201, post);
+  }
+
+  // POST /api/posts/:id/(like|save|comment)
+  const m = pathname.match(/^\/api\/posts\/([^/]+)\/(like|save|comment)$/);
+  if (m && req.method === "POST") {
+    const [, id, action] = m;
+    const body = await readBody(req);
+    const db   = dbRead();
+    const post = (db.posts ?? []).find(p => p.id === id);
+    if (!post) return apiRes(res, 404, { error: "not found" });
+    if (action === "like") {
+      post.likedBy = post.likedBy.includes(body.userId)
+        ? post.likedBy.filter(x => x !== body.userId)
+        : [...post.likedBy, body.userId];
+    } else if (action === "save") {
+      post.savedBy = post.savedBy.includes(body.userId)
+        ? post.savedBy.filter(x => x !== body.userId)
+        : [...post.savedBy, body.userId];
+    } else if (action === "comment") {
+      post.comments = [...(post.comments ?? []),
+        { id: uid(), authorId: body.authorId, text: body.text, at: Date.now() }];
+    }
+    dbWrite(db);
+    return apiRes(res, 200, post);
+  }
+
+  apiRes(res, 404, { error: "api route not found" });
+}
+
+function serveUpload(pathname, res) {
+  const fname = path.basename(pathname);
+  const fpath = path.join(UPLOADS_DIR, fname);
+  if (!fs.existsSync(fpath)) { res.writeHead(404); return res.end(); }
+  const ct = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png" }[path.extname(fname).toLowerCase()] ?? "application/octet-stream";
+  res.writeHead(200, { "content-type": ct, "cache-control": "public, max-age=86400" });
+  res.end(fs.readFileSync(fpath));
+}
+// ──────────────────────────────────────────────────────────────
+
 const SRC_VERSION_PATH  = path.resolve(__dirname, "..", "src-version.txt");
 const BUILD_VERSION_PATH = path.resolve(STATIC_ROOT, "src-version.txt");
 
@@ -228,6 +372,12 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  if (pathname.startsWith("/api/")) {
+    return routeApi(pathname, req, res).catch(err => apiRes(res, 500, { error: err.message }));
+  }
+  if (pathname.startsWith("/uploads/")) {
+    return serveUpload(pathname, res);
+  }
   serveStaticFile(pathname, res);
 });
 
