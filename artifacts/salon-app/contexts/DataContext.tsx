@@ -6,8 +6,10 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { AppState } from "react-native";
 
 const API_BASE = (process.env.EXPO_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
@@ -105,8 +107,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [state, hydrated]);
 
   // Fetch posts from shared API and merge into feed
-  useEffect(() => {
-    if (!hydrated || !API_BASE) return;
+  const fetchApiPosts = useCallback(() => {
+    if (!API_BASE) return;
     fetch(`${API_BASE}/api/posts`)
       .then(r => r.ok ? r.json() : [])
       .then((apiPosts: Post[]) => {
@@ -119,7 +121,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         });
       })
       .catch(() => {});
-  }, [hydrated]);
+  }, []);
+
+  // Initial fetch + poll every 30s
+  useEffect(() => {
+    if (!hydrated) return;
+    fetchApiPosts();
+    const timer = setInterval(fetchApiPosts, 30_000);
+    return () => clearInterval(timer);
+  }, [hydrated, fetchApiPosts]);
+
+  // Refresh when app comes to foreground
+  useEffect(() => {
+    if (!hydrated) return;
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") fetchApiPosts();
+    });
+    return () => sub.remove();
+  }, [hydrated, fetchApiPosts]);
 
   const toggleLike = useCallback(
     (postId: string) => {
