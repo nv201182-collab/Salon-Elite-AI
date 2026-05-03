@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -8,13 +9,37 @@ type Props = {
   initials: string;
   size?: number;
   variant?: "default" | "gold";
+  avatarUri?: string;
 };
 
-export function Avatar({ initials, size = 40, variant = "default" }: Props) {
+export function Avatar({ initials, size = 40, variant = "default", avatarUri }: Props) {
   const colors = useColors();
-  const isAccent = variant === "gold";
 
-  if (isAccent) {
+  if (avatarUri) {
+    return (
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          overflow: "hidden",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.15,
+          shadowRadius: 3,
+          elevation: 3,
+        }}
+      >
+        <Image
+          source={{ uri: avatarUri }}
+          style={{ width: size, height: size }}
+          contentFit="cover"
+        />
+      </View>
+    );
+  }
+
+  if (variant === "gold") {
     return (
       <LinearGradient
         colors={[colors.pink, colors.purple]}

@@ -55,15 +55,15 @@ export function PostCard({ post, isActive = false }: Props) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [heartBurst, setHeartBurst] = useState(false);
 
-  const author =
-    post.authorId === "u_self"
-      ? { name: user?.name ?? "Вы", specialty: user?.specialty ?? "", initials: user?.initials ?? "M" }
-      : EMPLOYEES_SEED.find((e) => e.id === post.authorId);
+  const isOwnPost = post.authorId === "u_self" || post.authorId === user?.id;
+  const author = isOwnPost
+    ? { name: user?.name ?? "Вы", specialty: user?.specialty ?? "", initials: user?.initials ?? "M", avatarUri: user?.avatarUri }
+    : EMPLOYEES_SEED.find((e) => e.id === post.authorId);
 
   const liked = user ? post.likedBy.includes(user.id) : false;
   const saved = user ? post.savedBy.includes(user.id) : false;
   const isVideo = !!post.video;
-  const isMine = post.authorId === "u_self" || post.authorId === user?.id;
+  const isMine = isOwnPost;
 
   const handleName = `@${(author?.name ?? "maison").split(" ")[0].toLowerCase()}`;
   const lastComment = post.comments[post.comments.length - 1];
@@ -171,7 +171,11 @@ export function PostCard({ post, isActive = false }: Props) {
       {/* ── Author header ──────────────────────────────────── */}
       <View style={styles.authorRow}>
         <View style={[styles.avatarRing, { borderColor: liked ? "#C8A064" : "rgba(200,160,100,0.30)" }]}>
-          <Avatar initials={author?.initials ?? "M"} size={34} />
+          <Avatar
+            initials={author?.initials ?? "M"}
+            size={34}
+            avatarUri={(author as any)?.avatarUri}
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.handle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>

@@ -256,7 +256,11 @@ export default function FeedScreen() {
                         style={[styles.storyRing, isViewed && styles.storyRingViewed]}
                       >
                         <View style={[styles.storyInner, { backgroundColor: "rgba(255,255,255,0.98)" }]}>
-                          <Avatar initials={s.initials} size={52} />
+                          <Avatar
+                            initials={s.initials}
+                            size={52}
+                            avatarUri={isYou ? user?.avatarUri : undefined}
+                          />
                           {isYou && !hasStories ? (
                             <View style={[styles.plusPill, { backgroundColor: "#C8A064", borderColor: "rgba(255,255,255,0.98)" }]}>
                               <Feather name="plus" size={11} color="#FFFFFF" />

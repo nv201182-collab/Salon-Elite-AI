@@ -1,5 +1,6 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -24,6 +25,7 @@ import { PressableScale } from "@/components/PressableScale";
 import { StatCard } from "@/components/StatCard";
 import { CommentsSheet } from "@/components/CommentsSheet";
 import { getLevel, getRoleLabel, useApp, type UserRole } from "@/contexts/AppContext";
+import * as Haptics from "expo-haptics";
 import { useData } from "@/contexts/DataContext";
 import { useTabBar } from "@/contexts/TabBarContext";
 import { type Post } from "@/data/seed";
@@ -61,7 +63,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout, pointsHistory, setRole } = useApp();
+  const { user, logout, pointsHistory, setRole, setAvatarUri } = useApp();
   const { courses, posts, getCourseProgress, salons, achievements } = useData();
   const { onScroll } = useTabBar();
   const [gridTab, setGridTab] = useState<GridTab>("posts");
@@ -78,6 +80,26 @@ export default function ProfileScreen() {
   // Derive followers/following from points + employees count
   const followersCount = Math.min(980, Math.round(user.points * 0.4 + 48));
   const followingCount = 62;
+
+  const pickAvatar = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Доступ к фото", "Разрешите доступ к галерее в настройках.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets[0]?.uri) {
+      setAvatarUri(result.assets[0].uri);
+    }
+  }, [setAvatarUri]);
 
   const onLogout = () => {
     Alert.alert("Выйти из APIA?", "Учётные данные будут удалены с устройства.", [
@@ -121,9 +143,20 @@ export default function ProfileScreen() {
         <View style={styles.profileSection}>
           {/* Avatar + stats */}
           <View style={styles.avatarStatsRow}>
-            <View style={[styles.avatarRing, { borderColor: "rgba(200,160,100,0.60)" }]}>
-              <Avatar initials={user.initials} size={82} variant="gold" />
-            </View>
+            <TouchableOpacity onPress={pickAvatar} activeOpacity={0.85}>
+              <View style={[styles.avatarRing, { borderColor: "rgba(200,160,100,0.60)" }]}>
+                <Avatar
+                  initials={user.initials}
+                  size={82}
+                  variant="gold"
+                  avatarUri={user.avatarUri}
+                />
+              </View>
+              {/* Camera badge */}
+              <View style={styles.cameraBadge}>
+                <Feather name="camera" size={12} color="#fff" />
+              </View>
+            </TouchableOpacity>
             <View style={styles.statsCol}>
               <StatItem value={String(myPosts.length)} label="Публикации" />
               <StatItem value={followersCount >= 1000 ? `${(followersCount / 1000).toFixed(1)}K` : String(followersCount)} label="Подписчики" />
@@ -430,6 +463,13 @@ const styles = StyleSheet.create({
     width: 98, height: 98, borderRadius: 49,
     alignItems: "center", justifyContent: "center",
     borderWidth: 2.5,
+  },
+  cameraBadge: {
+    position: "absolute", bottom: 2, right: 2,
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: "#C8A064",
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: "#fff",
   },
   statsCol: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
   statItem: { alignItems: "center", gap: 2 },

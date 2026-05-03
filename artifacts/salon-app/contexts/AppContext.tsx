@@ -44,6 +44,7 @@ export type User = {
   points: number;
   joinedAt: number;
   initials: string;
+  avatarUri?: string;
 };
 
 export type PointsRecord = { id: string; amount: number; reason: string; at: number };
@@ -60,18 +61,17 @@ type Ctx = {
   user: User | null;
   isLoading: boolean;
   pointsHistory: PointsRecord[];
-  // Мои сториз (массив)
   myStories: StoryEntry[];
   addStory: (text: string, mediaUri?: string) => void;
   updateStory: (id: string, text: string, mediaUri?: string) => void;
   deleteStory: (id: string) => void;
-  // Реакции: storyId → emoji (реакция текущего пользователя)
   myReactions: Record<string, string>;
   toggleReaction: (storyId: string, emoji: string) => void;
   login: (phone: string, name: string) => void;
   logout: () => Promise<void>;
   addPoints: (amount: number, reason?: string) => void;
   setRole: (role: UserRole) => void;
+  setAvatarUri: (uri: string) => void;
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -194,6 +194,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser((u) => (u ? { ...u, role } : u));
   }, []);
 
+  const setAvatarUri = useCallback((uri: string) => {
+    setUser((u) => (u ? { ...u, avatarUri: uri } : u));
+  }, []);
+
   const addStory = useCallback((text: string, mediaUri?: string) => {
     const entry: StoryEntry = {
       id: uid(),
@@ -232,8 +236,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     user, isLoading, pointsHistory,
     myStories, addStory, updateStory, deleteStory,
     myReactions, toggleReaction,
-    login, logout, addPoints, setRole,
-  }), [user, isLoading, pointsHistory, myStories, addStory, updateStory, deleteStory, myReactions, toggleReaction, login, logout, addPoints, setRole]);
+    login, logout, addPoints, setRole, setAvatarUri,
+  }), [user, isLoading, pointsHistory, myStories, addStory, updateStory, deleteStory, myReactions, toggleReaction, login, logout, addPoints, setRole, setAvatarUri]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

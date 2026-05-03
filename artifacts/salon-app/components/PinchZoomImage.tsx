@@ -1,124 +1,128 @@
 /**
- * Pinch-to-zoom image — Instagram 2026 style.
+ * PinchZoomImage — Instagram 2026 style full-screen zoom.
  *
- * Gestures:
- *  • Pinch: zoom 1× – 5×
- *  • Pan (while zoomed): drag with clamped bounds
- *  • Double-tap: toggle 1× ↔ 2.5× centered at tap point
- *  • Pinch release < 1.05×: spring back to 1×
+ * Pinch on any photo → image "breaks out" of the card and fills the screen,
+ * background fades to dark. Release → springs back to original position.
+ * Double-tap is handled by PostCard (adds like), not here.
  */
 import { Image } from "expo-image";
-import React from "react";
-import { useWindowDimensions } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import React, { useCallback, useRef, useState } from "react";
+import { Modal, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView, Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  interpolate,
+  Extrapolation,
 } from "react-native-reanimated";
 
 import { type ImageSrc } from "@/data/seed";
 
 type Props = { source: ImageSrc; style?: object };
 
-const SPRING_BACK  = { damping: 28, stiffness: 380, mass: 0.7 } as const;
-const SPRING_IN    = { damping: 22, stiffness: 340, mass: 0.8 } as const;
-const MAX_SCALE    = 5;
-const ZOOM_SCALE   = 2.5;
+const SPRING_BACK = { damping: 32, stiffness: 400, mass: 0.65 } as const;
+const MAX_SCALE   = 6;
+
+type Layout = { x: number; y: number; w: number; h: number };
 
 export function PinchZoomImage({ source, style }: Props) {
-  const { width: W } = useWindowDimensions();
+  const containerRef = useRef<View>(null);
+  const [modal, setModal]     = useState(false);
+  const [layout, setLayout]   = useState<Layout>({ x: 0, y: 0, w: 0, h: 0 });
 
+  // Shared values — driven by the Modal's gesture handler
   const scale    = useSharedValue(1);
-  const savedSc  = useSharedValue(1);
   const tx       = useSharedValue(0);
   const ty       = useSharedValue(0);
+  const savedSc  = useSharedValue(1);
   const savedTx  = useSharedValue(0);
   const savedTy  = useSharedValue(0);
 
-  function resetAll() {
-    "worklet";
-    scale.value   = withSpring(1, SPRING_BACK);
-    tx.value      = withSpring(0, SPRING_BACK);
-    ty.value      = withSpring(0, SPRING_BACK);
-    savedSc.value = 1;
-    savedTx.value = 0;
-    savedTy.value = 0;
-  }
+  const openModal = useCallback(() => {
+    containerRef.current?.measureInWindow((x, y, w, h) => {
+      setLayout({ x, y, w, h });
+      setModal(true);
+    });
+  }, []);
 
-  function clampTx(rawTx: number, sc: number) {
-    "worklet";
-    const maxShift = (W * (sc - 1)) / 2;
-    return Math.max(-maxShift, Math.min(maxShift, rawTx));
-  }
+  const closeModal = useCallback(() => {
+    setModal(false);
+    scale.value    = 1;
+    tx.value       = 0;
+    ty.value       = 0;
+    savedSc.value  = 1;
+    savedTx.value  = 0;
+    savedTy.value  = 0;
+  }, [scale, tx, ty, savedSc, savedTx, savedTy]);
 
-  const pinch = Gesture.Pinch()
+  // ── Gesture on original image: detect pinch start ──────────────────
+  const startGesture = Gesture.Pinch()
+    .onBegin(() => {
+      runOnJS(openModal)();
+    });
+
+  // ── Gestures inside the Modal ──────────────────────────────────────
+  const modalPinch = Gesture.Pinch()
     .onUpdate((e) => {
       scale.value = Math.min(MAX_SCALE, Math.max(1, savedSc.value * e.scale));
     })
     .onEnd(() => {
-      if (scale.value < 1.05) {
-        resetAll();
+      if (scale.value < 1.08) {
+        scale.value  = withSpring(1, SPRING_BACK, () => runOnJS(closeModal)());
+        tx.value     = withSpring(0, SPRING_BACK);
+        ty.value     = withSpring(0, SPRING_BACK);
       } else {
         savedSc.value = scale.value;
-        tx.value = clampTx(tx.value, scale.value);
-        ty.value = clampTx(ty.value, scale.value);
         savedTx.value = tx.value;
         savedTy.value = ty.value;
       }
     });
 
-  const pan = Gesture.Pan()
-    .minPointers(1)
+  const modalPan = Gesture.Pan()
+    .minPointers(2)
     .averageTouches(true)
     .onUpdate((e) => {
-      if (scale.value > 1) {
-        tx.value = clampTx(savedTx.value + e.translationX, scale.value);
-        ty.value = clampTx(savedTy.value + e.translationY, scale.value);
-      }
+      tx.value = savedTx.value + e.translationX;
+      ty.value = savedTy.value + e.translationY;
     })
     .onEnd(() => {
-      if (scale.value <= 1) {
-        tx.value = withSpring(0, SPRING_BACK);
-        ty.value = withSpring(0, SPRING_BACK);
-        savedTx.value = 0;
-        savedTy.value = 0;
-      } else {
-        savedTx.value = tx.value;
-        savedTy.value = ty.value;
-      }
+      savedTx.value = tx.value;
+      savedTy.value = ty.value;
     });
 
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .maxDuration(300)
+  // Single-finger pan while zoomed → dismiss
+  const dismissPan = Gesture.Pan()
+    .minPointers(1)
+    .maxPointers(1)
+    .onUpdate((e) => {
+      if (scale.value <= 1.1) {
+        ty.value = e.translationY * 0.5;
+      }
+    })
     .onEnd((e) => {
-      "worklet";
-      if (scale.value > 1) {
-        // Zoom back out
-        resetAll();
+      if (scale.value <= 1.1 && Math.abs(e.translationY) > 80) {
+        scale.value = withSpring(1, SPRING_BACK, () => runOnJS(closeModal)());
+        tx.value    = withSpring(0, SPRING_BACK);
+        ty.value    = withSpring(0, SPRING_BACK);
       } else {
-        // Zoom to 2.5× centred at tap point
-        const targetScale = ZOOM_SCALE;
-        // Offset to bring tap point to screen centre
-        // e.x / e.y are coordinates relative to the element (0 = top-left)
-        // Image centre is at (W/2, W/2) assuming square aspect
-        const halfW = W / 2;
-        const rawTx = (halfW - e.x) * (targetScale - 1);
-        const rawTy = (halfW - e.y) * (targetScale - 1);
-        scale.value   = withSpring(targetScale, SPRING_IN);
-        tx.value      = withSpring(clampTx(rawTx, targetScale), SPRING_IN);
-        ty.value      = withSpring(clampTx(rawTy, targetScale), SPRING_IN);
-        savedSc.value = targetScale;
-        savedTx.value = clampTx(rawTx, targetScale);
-        savedTy.value = clampTx(rawTy, targetScale);
+        ty.value = withSpring(0, SPRING_BACK);
       }
     });
 
-  const composed = Gesture.Simultaneous(pinch, pan);
-  const gesture  = Gesture.Exclusive(doubleTap, composed);
+  const modalGesture = Gesture.Exclusive(
+    Gesture.Simultaneous(modalPinch, modalPan),
+    dismissPan,
+  );
 
-  const animStyle = useAnimatedStyle(() => ({
+  // ── Animated styles ────────────────────────────────────────────────
+  const overlayStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    left: layout.x,
+    top:  layout.y,
+    width:  layout.w,
+    height: layout.h,
     transform: [
       { translateX: tx.value },
       { translateY: ty.value },
@@ -126,15 +130,55 @@ export function PinchZoomImage({ source, style }: Props) {
     ],
   }));
 
+  const backdropStyle = useAnimatedStyle(() => ({
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
+    opacity: interpolate(scale.value, [1, 2], [0, 0.88], Extrapolation.CLAMP),
+  }));
+
   return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View style={[style, animStyle]}>
-        <Image
-          source={source}
-          style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
-        />
-      </Animated.View>
-    </GestureDetector>
+    <>
+      {/* Original image (hidden while modal is open) */}
+      <GestureDetector gesture={startGesture}>
+        <View
+          ref={containerRef}
+          collapsable={false}
+          style={style}
+        >
+          <Image
+            source={source}
+            style={[{ width: "100%", height: "100%" }, modal && { opacity: 0 }]}
+            contentFit="cover"
+          />
+        </View>
+      </GestureDetector>
+
+      {/* Full-screen zoom overlay */}
+      <Modal
+        visible={modal}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={closeModal}
+      >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <GestureDetector gesture={modalGesture}>
+            <View style={{ flex: 1 }}>
+              {/* Dark backdrop fades in as scale increases */}
+              <Animated.View style={backdropStyle} />
+
+              {/* Zoomed image anchored at original screen position */}
+              <Animated.View style={overlayStyle}>
+                <Image
+                  source={source}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
+                />
+              </Animated.View>
+            </View>
+          </GestureDetector>
+        </GestureHandlerRootView>
+      </Modal>
+    </>
   );
 }
