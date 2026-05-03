@@ -1,6 +1,5 @@
 #!/bin/bash
 # Auto-sync from GitHub before starting the server
-# Preserves db.json (shared posts database) across resets
 
 echo "[start] Syncing with GitHub..."
 
@@ -17,6 +16,9 @@ if [ -f /tmp/db_backup.json ]; then
   cp /tmp/db_backup.json artifacts/salon-app/db.json
   echo "[start] Posts database restored."
 fi
+
+# Remove old build version stamp to force rebuild with latest code
+rm -f artifacts/salon-app/static-build/src-version.txt
 
 cd artifacts/salon-app
 PORT=8081 node server/serve.js
