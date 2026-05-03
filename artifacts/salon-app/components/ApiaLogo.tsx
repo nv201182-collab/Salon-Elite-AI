@@ -1,123 +1,86 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import Svg, { Path, Ellipse, Line, Polygon, G, Text as SvgText } from "react-native-svg";
+import { View } from "react-native";
+import Svg, { Path, Ellipse, Polygon, G, Text as SvgText } from "react-native-svg";
 
 /**
- * Точное воспроизведение логотипа APIA:
- * - Крупные буквы A P I A с широким кернингом
- * - «I» — вертикальная линия с золотым ромбом вместо точки
- * - Пчела в правом верхнем углу (золотая)
- * - Подстрока ARCHITECTURE • PEOPLE • INTELLIGENCE • ACTION
+ * APIA brand mark — thin geometric lettering, gold I-diamond, bee above.
+ * At width ≤ 140 only the wordmark + bee are shown (no tagline).
+ * At width > 140 the full tagline is shown below.
  */
-export function ApiaLogo({ width = 320 }: { width?: number }) {
-  const h = width * 0.55;
-  const scale = width / 320;
+export function ApiaLogo({ width = 200 }: { width?: number }) {
+  const compact = width <= 140;
+  const h = compact ? width * 0.52 : width * 0.60;
 
   return (
-    <Svg width={width} height={h} viewBox="0 0 320 176">
-      {/* Пчела — верхний правый угол */}
-      <BeeSvg x={228} y={-2} scale={0.72} />
+    <View style={{ width, height: h }}>
+      <Svg width={width} height={h} viewBox={compact ? "0 0 200 104" : "0 0 320 192"}>
+        {compact ? <CompactMark /> : <FullMark />}
+      </Svg>
+    </View>
+  );
+}
 
-      {/* Буква A (левая) */}
-      <SvgText
-        x="0" y="110"
-        fontSize="108"
-        fontWeight="300"
-        letterSpacing="2"
-        fill="#141210"
-        fontFamily="sans-serif"
-      >
-        A
-      </SvgText>
+/** Wordmark only: "APIA" + bee, viewBox 200×104 */
+function CompactMark() {
+  return (
+    <G>
+      <BeeSvg x={138} y={0} s={0.55} />
 
-      {/* Буква P */}
-      <SvgText
-        x="78" y="110"
-        fontSize="108"
-        fontWeight="300"
-        letterSpacing="2"
-        fill="#141210"
-        fontFamily="sans-serif"
-      >
-        P
-      </SvgText>
+      {/* A */}
+      <SvgText x="0" y="74" fontSize="78" fontWeight="200" letterSpacing="1" fill="#1A1210" fontFamily="serif">A</SvgText>
+      {/* P */}
+      <SvgText x="55" y="74" fontSize="78" fontWeight="200" letterSpacing="1" fill="#1A1210" fontFamily="serif">P</SvgText>
+      {/* I — vertical stroke + diamond */}
+      <Path d="M114,10 L114,74" stroke="#1A1210" strokeWidth="3.5" strokeLinecap="round" />
+      <Polygon points="114,2 121,10 114,18 107,10" fill="#B78F4E" />
+      {/* A */}
+      <SvgText x="126" y="74" fontSize="78" fontWeight="200" letterSpacing="1" fill="#1A1210" fontFamily="serif">A</SvgText>
+    </G>
+  );
+}
 
-      {/* Буква I — тонкая линия + золотой ромб */}
-      {/* Вертикальная линия */}
-      <Path d="M167,14 L167,110" stroke="#141210" strokeWidth="5" strokeLinecap="round" />
-      {/* Золотой ромб (вместо точки сверху) */}
-      <Polygon
-        points="167,2 175,11 167,20 159,11"
-        fill="#B78F4E"
-      />
+/** Full mark: wordmark + tagline, viewBox 320×192 */
+function FullMark() {
+  return (
+    <G>
+      <BeeSvg x={228} y={0} s={0.70} />
 
-      {/* Буква A (правая) */}
-      <SvgText
-        x="185" y="110"
-        fontSize="108"
-        fontWeight="300"
-        letterSpacing="2"
-        fill="#141210"
-        fontFamily="sans-serif"
-      >
-        A
-      </SvgText>
+      {/* A */}
+      <SvgText x="0" y="110" fontSize="108" fontWeight="200" letterSpacing="2" fill="#1A1210" fontFamily="serif">A</SvgText>
+      {/* P */}
+      <SvgText x="78" y="110" fontSize="108" fontWeight="200" letterSpacing="2" fill="#1A1210" fontFamily="serif">P</SvgText>
+      {/* I — vertical stroke + diamond */}
+      <Path d="M167,14 L167,110" stroke="#1A1210" strokeWidth="5" strokeLinecap="round" />
+      <Polygon points="167,2 175,11 167,20 159,11" fill="#B78F4E" />
+      {/* A */}
+      <SvgText x="185" y="110" fontSize="108" fontWeight="200" letterSpacing="2" fill="#1A1210" fontFamily="serif">A</SvgText>
 
-      {/* Подстрока */}
-      <SvgText
-        x="160" y="140"
-        fontSize="8.5"
-        fontWeight="400"
-        letterSpacing="1.4"
-        fill="#9A9088"
-        fontFamily="sans-serif"
-        textAnchor="middle"
-      >
-        ARCHITECTURE
-      </SvgText>
-      <SvgText x="160" y="140" fontSize="8.5" fill="#B78F4E" fontFamily="sans-serif">
-        {/* dots handled below */}
-      </SvgText>
-
-      {/* Подстрока целиком */}
       <TaglineSvg />
-    </Svg>
+    </G>
   );
 }
 
 function TaglineSvg() {
-  const words = ["ARCHITECTURE", "PEOPLE", "INTELLIGENCE", "ACTION"];
   const dotColor = "#B78F4E";
   const textColor = "#9A9088";
-  const fontSize = 7.5;
-  const letterSpacing = 1.2;
-
-  // Позиции рассчитаны вручную для viewBox 320
+  const fs = 7.5;
+  const ls = 1.2;
   const positions: { type: "word" | "dot"; x: number; text?: string }[] = [
-    { type: "word", x: 8, text: "ARCHITECTURE" },
-    { type: "dot", x: 96 },
+    { type: "word", x: 8,   text: "ARCHITECTURE" },
+    { type: "dot",  x: 96 },
     { type: "word", x: 103, text: "PEOPLE" },
-    { type: "dot", x: 143 },
+    { type: "dot",  x: 143 },
     { type: "word", x: 150, text: "INTELLIGENCE" },
-    { type: "dot", x: 234 },
+    { type: "dot",  x: 234 },
     { type: "word", x: 241, text: "ACTION" },
   ];
-
   return (
     <G>
       {positions.map((p, i) =>
         p.type === "dot" ? (
           <Ellipse key={i} cx={p.x} cy={138} rx={1.5} ry={1.5} fill={dotColor} />
         ) : (
-          <SvgText
-            key={i}
-            x={p.x}
-            y={142}
-            fontSize={fontSize}
-            letterSpacing={letterSpacing}
-            fill={textColor}
-            fontFamily="sans-serif"
-          >
+          <SvgText key={i} x={p.x} y={142} fontSize={fs} letterSpacing={ls} fill={textColor} fontFamily="sans-serif">
             {p.text}
           </SvgText>
         )
@@ -126,39 +89,29 @@ function TaglineSvg() {
   );
 }
 
-function BeeSvg({ x, y, scale: s }: { x: number; y: number; scale: number }) {
+function BeeSvg({ x, y, s }: { x: number; y: number; s: number }) {
   const gold = "#B78F4E";
   const dark = "#3A2A10";
-  const wingFill = "#C9A070";
-
+  const wing = "#C9A070";
   return (
     <G transform={`translate(${x},${y}) scale(${s})`}>
-      {/* Крылья (позади тела) */}
-      {/* Верхнее левое крыло */}
-      <Ellipse cx="-18" cy="22" rx="18" ry="10" fill={wingFill} opacity="0.55" transform="rotate(-30,-18,22)" />
-      {/* Верхнее правое крыло */}
-      <Ellipse cx="18" cy="22" rx="18" ry="10" fill={wingFill} opacity="0.55" transform="rotate(30,18,22)" />
-      {/* Нижнее левое крыло */}
-      <Ellipse cx="-14" cy="34" rx="12" ry="7" fill={wingFill} opacity="0.4" transform="rotate(-20,-14,34)" />
-      {/* Нижнее правое крыло */}
-      <Ellipse cx="14" cy="34" rx="12" ry="7" fill={wingFill} opacity="0.4" transform="rotate(20,14,34)" />
-
-      {/* Тело */}
+      {/* Wings (behind body) */}
+      <Ellipse cx="-18" cy="22" rx="18" ry="10" fill={wing} opacity="0.55" transform="rotate(-30,-18,22)" />
+      <Ellipse cx="18"  cy="22" rx="18" ry="10" fill={wing} opacity="0.55" transform="rotate(30,18,22)"  />
+      <Ellipse cx="-14" cy="34" rx="12" ry="7"  fill={wing} opacity="0.40" transform="rotate(-20,-14,34)" />
+      <Ellipse cx="14"  cy="34" rx="12" ry="7"  fill={wing} opacity="0.40" transform="rotate(20,14,34)"   />
+      {/* Body */}
       <Ellipse cx="0" cy="42" rx="10" ry="18" fill={gold} />
-      {/* Полоски */}
-      <Path d="M-9,36 Q0,34 9,36" stroke={dark} strokeWidth="3.5" fill="none" />
+      <Path d="M-9,36 Q0,34 9,36"  stroke={dark} strokeWidth="3.5" fill="none" />
       <Path d="M-10,42 Q0,40 10,42" stroke={dark} strokeWidth="3.5" fill="none" />
-      <Path d="M-9,48 Q0,46 9,48" stroke={dark} strokeWidth="3.5" fill="none" />
-
-      {/* Голова */}
+      <Path d="M-9,48 Q0,46 9,48"  stroke={dark} strokeWidth="3.5" fill="none" />
+      {/* Head */}
       <Ellipse cx="0" cy="22" rx="9" ry="9" fill={gold} />
-
-      {/* Усики */}
+      {/* Antennae */}
       <Path d="M-4,14 Q-14,4 -18,-2" stroke={dark} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <Path d="M4,14 Q14,4 18,-2" stroke={dark} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      {/* Кончики усиков */}
+      <Path d="M4,14 Q14,4 18,-2"    stroke={dark} strokeWidth="1.5" fill="none" strokeLinecap="round" />
       <Ellipse cx="-18" cy="-2" rx="2" ry="2" fill={dark} />
-      <Ellipse cx="18" cy="-2" rx="2" ry="2" fill={dark} />
+      <Ellipse cx="18"  cy="-2" rx="2" ry="2" fill={dark} />
     </G>
   );
 }

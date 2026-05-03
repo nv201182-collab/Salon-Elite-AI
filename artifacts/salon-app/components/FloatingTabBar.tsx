@@ -280,8 +280,8 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 18,
   },
-  /* Cool transparent gray — Apple Liquid Glass, no beige */
-  tint: { backgroundColor: "rgba(242,242,248,0.65)" },
+  /* Warm cream — Apple Liquid Glass, organic and airy */
+  tint: { backgroundColor: "rgba(250,248,244,0.82)" },
 
   pill: {
     position: "absolute",

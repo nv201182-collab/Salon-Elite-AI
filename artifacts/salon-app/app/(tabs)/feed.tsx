@@ -7,6 +7,7 @@ import { FlatList, Platform, RefreshControl, ScrollView, StyleSheet, Text, Touch
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/Avatar";
+import { ApiaLogo } from "@/components/ApiaLogo";
 import { useBeeRefresh } from "@/components/BeeRefreshIndicator";
 import { Chip } from "@/components/Chip";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
@@ -149,13 +150,7 @@ export default function FeedScreen() {
             <View style={[styles.header, { paddingTop: headerPad }]}>
               {/* APIA logo */}
               <View style={styles.logoWrap}>
-                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>A</Text>
-                <Text style={[styles.logoDot, { color: "#C8A064", fontFamily: "Inter_700Bold" }]}>·</Text>
-                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>P</Text>
-                <Text style={[styles.logoDot, { color: "#C8A064", fontFamily: "Inter_700Bold" }]}>·</Text>
-                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>I</Text>
-                <Text style={[styles.logoDot, { color: "#C8A064", fontFamily: "Inter_700Bold" }]}>·</Text>
-                <Text style={[styles.logoA, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>A</Text>
+                <ApiaLogo width={120} />
               </View>
 
               <View style={{ flex: 1 }} />
@@ -388,9 +383,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     gap: 8,
   },
-  logoWrap: { flexDirection: "row", alignItems: "center", gap: 2 },
-  logoA: { fontSize: 20, letterSpacing: 1 },
-  logoDot: { fontSize: 18, marginBottom: 1 },
+  logoWrap: { alignItems: "flex-start", justifyContent: "center" },
   iconBtn: { padding: 6, position: "relative" },
   badge: {
     position: "absolute", top: 2, right: 2,
