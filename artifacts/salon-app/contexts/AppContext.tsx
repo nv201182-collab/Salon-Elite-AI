@@ -122,7 +122,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (re) setMyReactions(JSON.parse(re));
 
         if (u) {
-          setUser(JSON.parse(u));
+          const parsed = JSON.parse(u);
+          // Migration: ignore stale guest users from before phone auth
+          if (parsed?.phone && parsed.phone.length > 5) {
+            setUser(parsed);
+          }
         }
         // No auto-guest: user must log in with phone number
         if (h) setPointsHistory(JSON.parse(h));

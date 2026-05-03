@@ -35,9 +35,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (isLoading) return;
     const first = segments[0] as string | undefined;
     const onLogin = first === "login";
-    if (!user && !onLogin) {
+    const needsLogin = !user || !user.phone;
+    if (needsLogin && !onLogin) {
       router.replace("/login");
-    } else if (user && onLogin) {
+    } else if (!needsLogin && onLogin) {
       router.replace("/(tabs)/feed");
     }
   }, [user, isLoading, segments, router]);
