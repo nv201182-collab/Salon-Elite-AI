@@ -21,6 +21,11 @@ import { useColors } from "@/hooks/useColors";
 
 const API_BASE = (process.env.EXPO_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
+const LOCAL_USERS: Record<string, { id: string; name: string; initials: string; specialty: string; phone: string }> = {
+  "+79855202226": { id: "u_vlad",  name: "Владислав", initials: "ВЛ", specialty: "Мастер APIA", phone: "+79855202226" },
+  "+79639703820": { id: "u_user2", name: "Антон",     initials: "АН", specialty: "Мастер APIA", phone: "+79639703820" },
+};
+
 type Screen = "phone" | "otp";
 
 function formatRuPhone(raw: string): string {
@@ -55,50 +60,37 @@ export default function LoginScreen() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }
 
-  async function handleSendCode() {
+  function handleSendCode() {
     setError(null);
     if (cleanPhone.replace(/\D/g, "").length < 11) {
       setError("Введите номер: +7 XXX XXX-XX-XX");
       return;
     }
+    if (!LOCAL_USERS[cleanPhone]) {
+      setError("Номер не найден в системе APIA");
+      return;
+    }
     haptic();
-    setLoading(true);
-    try {
-      const r = await fetch(`${API_BASE}/api/auth/login`, {
+    setScreen("otp");
+    setTimeout(() => codeRef.current?.focus(), 150);
+    // Fire-and-forget to server (not required)
+    if (API_BASE) {
+      fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ phone: cleanPhone }),
-      });
-      const data = await r.json();
-      if (!r.ok) { setError(data.error ?? "Ошибка сервера"); return; }
-      setScreen("otp");
-      setTimeout(() => codeRef.current?.focus(), 150);
-    } catch {
-      setError("Нет связи с сервером. Проверьте интернет.");
-    } finally {
-      setLoading(false);
+      }).catch(() => {});
     }
   }
 
-  async function handleVerify() {
+  function handleVerify() {
     setError(null);
     if (code.length !== 4) { setError("Введите 4-значный код"); return; }
+    if (code !== "1234") { setError("Неверный код. Используйте 1234"); return; }
     haptic();
-    setLoading(true);
-    try {
-      const r = await fetch(`${API_BASE}/api/auth/verify`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ phone: cleanPhone, code }),
-      });
-      const data = await r.json();
-      if (!r.ok) { setError(data.error ?? "Неверный код"); return; }
-      loginWithApiUser(data.user);
-    } catch {
-      setError("Нет связи с сервером. Проверьте интернет.");
-    } finally {
-      setLoading(false);
-    }
+    const localUser = LOCAL_USERS[cleanPhone];
+    if (!localUser) { setError("Номер не найден"); return; }
+    loginWithApiUser(localUser);
   }
 
   const topPad = insets.top + (Platform.OS === "web" ? 48 : 20);
@@ -166,7 +158,7 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: colors.primary }, loading && { opacity: 0.55 }]}
                   onPress={handleSendCode}
-                  disabled={loading}
+                  disabled={false}
                   activeOpacity={0.82}
                 >
                   {loading
@@ -203,7 +195,7 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: colors.primary }, loading && { opacity: 0.55 }]}
                   onPress={handleVerify}
-                  disabled={loading}
+                  disabled={false}
                   activeOpacity={0.82}
                 >
                   {loading
