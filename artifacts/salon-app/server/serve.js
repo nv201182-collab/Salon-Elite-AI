@@ -13,37 +13,23 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-const { spawn, execSync } = require("child_process");
+const { spawn, exec } = require("child_process");
 
-// ─── Auto-sync from GitHub on every startup ────────────────────
+// ─── Auto-sync from GitHub (non-blocking, runs in background) ──
 (function autoSync() {
-  try {
-    const repoRoot = path.resolve(__dirname, "..", "..", "..");
-    const dbPath = path.join(repoRoot, "artifacts", "salon-app", "db.json");
+  const repoRoot = path.resolve(__dirname, "..", "..", "..");
+  const dbPath = path.join(repoRoot, "artifacts", "salon-app", "db.json");
+  const stampPath = path.join(repoRoot, "artifacts", "salon-app", "static-build", "src-version.txt");
 
-    // Backup posts database before reset
-    let dbBackup = null;
-    try { dbBackup = fs.readFileSync(dbPath, "utf-8"); } catch {}
+  let dbBackup = null;
+  try { dbBackup = fs.readFileSync(dbPath, "utf-8"); } catch {}
 
-    execSync("git fetch origin --quiet && git reset --hard origin/main --quiet", {
-      cwd: repoRoot,
-      timeout: 30000,
-      stdio: "pipe",
-    });
-
-    // Restore posts database after reset
-    if (dbBackup) {
-      try { fs.writeFileSync(dbPath, dbBackup); } catch {}
-    }
-
-    // Remove old build stamp to force rebuild with latest code
-    const stampPath = path.join(repoRoot, "artifacts", "salon-app", "static-build", "src-version.txt");
+  exec("git fetch origin && git reset --hard origin/main", { cwd: repoRoot, timeout: 60000 }, (err) => {
+    if (err) { console.warn("[serve] Git sync skipped:", err.message); return; }
+    if (dbBackup) try { fs.writeFileSync(dbPath, dbBackup); } catch {}
     try { fs.unlinkSync(stampPath); } catch {}
-
     console.log("[serve] Auto-synced with GitHub ✓");
-  } catch (e) {
-    console.warn("[serve] Git sync skipped:", e.message);
-  }
+  });
 })();
 
 const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
